@@ -6,6 +6,7 @@ cacerts.jks
 keys.jks
 adaptor.crt
 gsa.crt
+target/
 
 # IntelliJ files
 workspace/
