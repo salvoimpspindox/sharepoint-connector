@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
@@ -817,7 +816,8 @@ class SharePointRepository implements Repository {
 		long result = rootConnector.getSiteDataClient().getSiteAndWeb(url, site, web);
 		if (result != 0) {
 			// SALVO
-			return getSiteConnectorForSiteCollectionOnly();
+			// return getSiteConnectorForSiteCollectionOnly();
+			return null;
 		}
 		if (sharepointConfiguration.isSiteCollectionUrl() &&
 		// Performing case sensitive comparison as mismatch in URL casing
@@ -1200,12 +1200,14 @@ class SharePointRepository implements Repository {
 		boolean isFolder = "1".equals(type);
 		Element schemaElement = getFirstChildWithName(xml, SCHEMA_ELEMENT);
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
-		String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
-		// SALVO
-		if (contestoVisibilita != null) {
-			Arrays.asList(contestoVisibilita.split(",")).forEach(x -> {
-				extractedMetadataValues.put("Azienda", x);
-			});
+		if (extractedMetadataValues.get("ContestoVisibilita").iterator().hasNext()) {
+			String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
+			// SALVO
+			if (contestoVisibilita != null) {
+				Arrays.asList(contestoVisibilita.split(",")).forEach(x -> {
+					extractedMetadataValues.put("Azienda", x);
+				});
+			}
 		}
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
@@ -1256,8 +1258,14 @@ class SharePointRepository implements Repository {
 			log.warning("\n\nHtml content not wanted\n\n");
 			return ApiOperations.deleteItem(polledItem.getName());
 		}
-		log.info("\n\nDati item: " + item.getMetadata().getTitle()
-				+ extractedMetadataValues.keySet().stream().collect(Collectors.joining(",")) + "\n\n");
+		if (!"NPNDocumento".equals(objectType)) {
+			log.warning("\n\nContent different from NPNDocumento not wanted\n\n");
+			return ApiOperations.deleteItem(polledItem.getName());
+		}
+		log.info("\n\nDati item: "
+				+ item.getMetadata().getTitle() + extractedMetadataValues.entries().stream()
+						.map(x -> x.getKey() + ":" + x.getValue().toString()).collect(Collectors.joining(","))
+				+ "\n\n");
 		return docBuilder.setItem(item).build();
 	}
 
