@@ -32,6 +32,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.enterprise.cloudsearch.sdk.CheckpointCloseableIterable;
@@ -814,7 +816,7 @@ class SharePointRepository implements Repository {
 		Holder<String> web = new Holder<String>();
 		long result = rootConnector.getSiteDataClient().getSiteAndWeb(url, site, web);
 		if (result != 0) {
-			//SALVO
+			// SALVO
 			return getSiteConnectorForSiteCollectionOnly();
 		}
 		if (sharepointConfiguration.isSiteCollectionUrl() &&
@@ -999,29 +1001,13 @@ class SharePointRepository implements Repository {
 			siteAdmins.setInheritFrom(VIRTUAL_SERVER_ID);
 			siteAdmins.setInheritanceType(InheritanceType.PARENT_OVERRIDE);
 		}
-		Item adminFragmentItem = siteAdmins.build()
-				.createFragmentItemOf(polledItem.getName(), SITE_COLLECTION_ADMIN_FRAGMENT)
-				.encodePayload(siteAdminObject.encodePayload()).setItemType(ItemType.VIRTUAL_CONTAINER_ITEM.name());
-		RepositoryDoc adminFragment = new RepositoryDoc.Builder().setItem(adminFragmentItem).build();
-		batchRequest.add(adminFragment);
-		IndexingItemBuilder item = IndexingItemBuilder.fromConfiguration(polledItem.getName());
-		if (!sharepointConfiguration.isSiteCollectionUrl()) {
-			item.setContainerName(withValue(VIRTUAL_SERVER_ID));
-		}
-		Acl itemAcl = new Acl.Builder().setReaders(scConnector.getWebAcls(rootWeb))
-				.setInheritanceType(InheritanceType.PARENT_OVERRIDE).setInheritFrom(siteAdminFragmentId).build();
-		item.setAcl(itemAcl);
-		item.setItemType(ItemType.CONTAINER_ITEM);
-		item.setPayload(polledItem.decodePayload());
-		item.setTitle(withValue(rootWeb.getMetadata().getTitle()));
-		item.setSourceRepositoryUrl(
-				getNormalizedSourceRepositoryUrl(scConnector.encodeDocId(rootWeb.getMetadata().getURL())));
-		RepositoryDoc.Builder doc = new RepositoryDoc.Builder().setItem(item.build());
+
 		Map<String, PushItem> childWebs = getChildWebEntries(scConnector, site.getMetadata().getID(), rootWeb);
 		Map<String, PushItem> childList = getChildListEntries(scConnector, site.getMetadata().getID(), rootWeb);
-		addChildIdsToRepositoryDoc(doc, childWebs);
-		addChildIdsToRepositoryDoc(doc, childList);
-		batchRequest.add(doc.build());
+		PushItems.Builder builder = new PushItems.Builder();
+		Streams.concat(childWebs.entrySet().stream(), childList.entrySet().stream())
+				.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
+		batchRequest.add(builder.build());
 		return ApiOperations.batch(batchRequest.iterator());
 	}
 
@@ -1045,16 +1031,14 @@ class SharePointRepository implements Repository {
 			aclBuilder.setReaders(scConnector.getWebAcls(currentWeb));
 			aclBuilder.setInheritFrom(scConnector.getSiteUrl(), SITE_COLLECTION_ADMIN_FRAGMENT);
 		}
-		IndexingItemBuilder item = IndexingItemBuilder.fromConfiguration(polledItem.getName())
-				.setAcl(aclBuilder.build()).setContainerName(withValue(parentWebUrl))
-				.setPayload(polledItem.decodePayload()).setTitle(withValue(currentWeb.getMetadata().getTitle()))
-				.setSourceRepositoryUrl(
-						getNormalizedSourceRepositoryUrl(scConnector.encodeDocId(currentWeb.getMetadata().getURL())))
-				.setItemType(ItemType.CONTAINER_ITEM);
-		RepositoryDoc.Builder doc = new RepositoryDoc.Builder();
-		addChildIdsToRepositoryDoc(doc, getChildWebEntries(scConnector, webObject.getSiteId(), currentWeb));
-		addChildIdsToRepositoryDoc(doc, getChildListEntries(scConnector, webObject.getSiteId(), currentWeb));
-		return doc.setItem(item.build()).build();
+
+		Map<String, PushItem> childWebs = getChildWebEntries(scConnector, webObject.getSiteId(), currentWeb);
+		Map<String, PushItem> childList = getChildListEntries(scConnector, webObject.getSiteId(), currentWeb);
+		PushItems.Builder builder = new PushItems.Builder();
+		Streams.concat(childWebs.entrySet().stream(), childList.entrySet().stream())
+				.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
+
+		return builder.build();
 	}
 
 	private ApiOperation getListDocContent(Item polledItem, SiteConnector scConnector, SharePointObject listObject)
@@ -1081,39 +1065,11 @@ class SharePointRepository implements Repository {
 			return ApiOperations.deleteItem(polledItem.getName());
 		}
 
-		Web w = scConnector.getSiteDataClient().getContentWeb();
-		String scopeId = l.getMetadata().getScopeID().toLowerCase(Locale.ENGLISH);
-		String webScopeId = w.getMetadata().getScopeID().toLowerCase(Locale.ENGLISH);
-		Acl.Builder listAcl = new Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE);
-		if (scopeId.equals(webScopeId)) {
-			listAcl.setInheritFrom(scConnector.getWebUrl());
-		} else {
-			listAcl.setReaders(scConnector.getListAcl(l));
-			listAcl.setInheritFrom(scConnector.getSiteUrl(), SITE_COLLECTION_ADMIN_FRAGMENT);
-		}
+		Map<String, PushItem> foldersMap = processFolder(scConnector, listObject.getListId(), "", listObject);
 
-		IndexingItemBuilder listItemBuilder = IndexingItemBuilder.fromConfiguration(polledItem.getName())
-				.setContainerName(withValue(scConnector.getWebUrl())).setAcl(listAcl.build())
-				.setItemType(ItemType.CONTAINER_ITEM).setPayload(listObject.encodePayload());
-
-		String path = "/".equals(l.getMetadata().getDefaultViewUrl()) ? l.getMetadata().getRootFolder()
-				: l.getMetadata().getDefaultViewUrl();
-		String displayUrl = scConnector.encodeDocId(path);
-		listItemBuilder.setSourceRepositoryUrl(getNormalizedSourceRepositoryUrl(displayUrl));
-
-		String lastModified = l.getMetadata().getLastModified();
-		if (!Strings.isNullOrEmpty(lastModified)) {
-			try {
-				listItemBuilder
-						.setUpdateTime(withValue(new DateTime(listLastModifiedDateFormat.get().parse(lastModified))));
-			} catch (ParseException ex) {
-				log.log(Level.INFO, "Could not parse LastModified: {0}", lastModified);
-			}
-		}
-		listItemBuilder.setTitle(withValue(l.getMetadata().getTitle()));
-		RepositoryDoc.Builder listDoc = new RepositoryDoc.Builder().setItem(listItemBuilder.build());
-		addChildIdsToRepositoryDoc(listDoc, processFolder(scConnector, listObject.getListId(), "", listObject));
-		return listDoc.build();
+		PushItems.Builder builder = new PushItems.Builder();
+		foldersMap.entrySet().forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
+		return builder.build();
 	}
 
 	private ApiOperation getListItemDocContent(Item polledItem, SiteConnector scConnector, SharePointObject itemObject)
@@ -1244,6 +1200,13 @@ class SharePointRepository implements Repository {
 		boolean isFolder = "1".equals(type);
 		Element schemaElement = getFirstChildWithName(xml, SCHEMA_ELEMENT);
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
+		String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
+		// SALVO
+		if (contestoVisibilita != null) {
+			Arrays.asList(contestoVisibilita.split(",")).forEach(x -> {
+				extractedMetadataValues.put("Azienda", x);
+			});
+		}
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
 		if (!Strings.isNullOrEmpty(objectType) && StructuredData.hasObjectDefinition(objectType)) {
@@ -1252,7 +1215,6 @@ class SharePointRepository implements Repository {
 		itemBuilder.setValues(extractedMetadataValues);
 		if (isFolder) {
 			String serverUrl = row.getAttribute(OWS_SERVERURL_ATTRIBUTE);
-			itemBuilder.setItemType(ItemType.CONTAINER_ITEM);
 			String root = scConnector.encodeDocId(l.getMetadata().getRootFolder());
 			root += "/";
 			String folder = scConnector.encodeDocId(serverUrl);
@@ -1262,29 +1224,16 @@ class SharePointRepository implements Repository {
 								String.format("Folder path [%s] doesn't start with root path [%s]", folder, root))
 						.setErrorType(ErrorType.CLIENT_ERROR).build();
 			}
-			try {
-				String defaultViewUrl = scConnector.encodeDocId(l.getMetadata().getDefaultViewUrl());
-				URI displayPage = buildSharePointUrl(defaultViewUrl).getURI();
-				// SharePoint percent-encodes '/'s in serverUrl, but accepts them
-				// encoded or unencoded. We leave them unencoded for simplicity of
-				// implementation and to not deal with the possibility of
-				// double-encoding.
-				URI displayUrl = new URI(displayPage.getScheme(), displayPage.getAuthority(), displayPage.getPath(),
-						"RootFolder=" + serverUrl, null);
-				itemBuilder.setSourceRepositoryUrl(getNormalizedSourceRepositoryUrl(displayUrl.toString()));
-			} catch (URISyntaxException ex) {
-				throw new IOException(ex);
-			}
-			RepositoryDoc.Builder doc = new RepositoryDoc.Builder();
-			addChildIdsToRepositoryDoc(doc,
-					processAttachments(scConnector, listId.value, itemId.value, row, itemObject));
-			addChildIdsToRepositoryDoc(doc,
-					processFolder(scConnector, listId.value, folder.substring(root.length()), itemObject));
-			return doc.setItem(itemBuilder.build())
-					.setContent(
-							ByteArrayContent.fromString(null, listItemContentTemplate.apply(extractedMetadataValues)),
-							ContentFormat.HTML)
-					.build();
+
+			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,
+					itemObject);
+			Map<String, PushItem> foldersMap = processFolder(scConnector, listId.value, folder.substring(root.length()),
+					itemObject);
+
+			PushItems.Builder builder = new PushItems.Builder();
+			Streams.concat(attachmentsMap.entrySet().stream(), foldersMap.entrySet().stream())
+					.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
+			return builder.build();
 		}
 		String contentTypeId = row.getAttribute(OWS_CONTENTTYPEID_ATTRIBUTE);
 		boolean isDocument = (contentTypeId != null) && contentTypeId.startsWith(CONTENTTYPEID_DOCUMENT_PREFIX);
@@ -1295,25 +1244,21 @@ class SharePointRepository implements Repository {
 			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
 			docBuilder.setContent(getFileContent(itemObject.getUrl(), itemBuilder, true), ContentFormat.RAW);
 		} else {
-			// Since list items can have attachments as child items, marking list items as
-			// containers
-			itemBuilder.setItemType(ItemType.CONTAINER_ITEM);
-			String defaultViewItemUrl = scConnector.encodeDocId(l.getMetadata().getDefaultViewItemUrl());
-			try {
-				URI displayPage = buildSharePointUrl(defaultViewItemUrl).getURI();
-				URI viewItemUri = new URI(displayPage.getScheme(), displayPage.getAuthority(), displayPage.getPath(),
-						"ID=" + itemId.value, null);
-				itemBuilder.setSourceRepositoryUrl(getNormalizedSourceRepositoryUrl(viewItemUri.toString()));
-			} catch (URISyntaxException e) {
-				throw new IOException(e);
-			}
-			addChildIdsToRepositoryDoc(docBuilder,
-					processAttachments(scConnector, listId.value, itemId.value, row, itemObject));
-			docBuilder.setContent(
-					ByteArrayContent.fromString(null, listItemContentTemplate.apply(extractedMetadataValues)),
-					ContentFormat.HTML);
+			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,
+					itemObject);
+
+			PushItems.Builder builder = new PushItems.Builder();
+			attachmentsMap.entrySet().stream().forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
+			return builder.build();
 		}
-		return docBuilder.setItem(itemBuilder.build()).build();
+		Item item = itemBuilder.build();
+		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
+			log.warning("\n\nHtml content not wanted\n\n");
+			return ApiOperations.deleteItem(polledItem.getName());
+		}
+		log.info("\n\nDati item: " + item.getMetadata().getTitle()
+				+ extractedMetadataValues.keySet().stream().collect(Collectors.joining(",")) + "\n\n");
+		return docBuilder.setItem(item).build();
 	}
 
 	private static void addChildIdsToRepositoryDoc(RepositoryDoc.Builder docBuilder, Map<String, PushItem> entries) {
@@ -1371,7 +1316,14 @@ class SharePointRepository implements Repository {
 				.build();
 		itemBuilder.setAcl(acl).setPayload(polledItem.decodePayload()).setContainerName(withValue(parentItem))
 				.setItemType(ItemType.CONTENT_ITEM);
-		return new RepositoryDoc.Builder().setItem(itemBuilder.build()).setContent(content, ContentFormat.RAW).build();
+
+		Item item = itemBuilder.build();
+		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
+			log.warning("\n\nHtml content not wanted\n\n");
+			return ApiOperations.deleteItem(polledItem.getName());
+		}
+
+		return new RepositoryDoc.Builder().setItem(item).setContent(content, ContentFormat.RAW).build();
 	}
 
 	private static String getFileNameFromUrl(String url) {
@@ -1504,7 +1456,11 @@ class SharePointRepository implements Repository {
 		}
 		try (InputStream contentStream = fi.getContents()) {
 			if (isHtmlContent(contentType)) {
-				return htmlContentFilter.getParsedHtmlContent(contentStream, baseUrl, contentType);
+				log.warning("\n\nHtml content not wanted\n\n");
+				// SALVO TODO FIX
+				return null;
+				// return htmlContentFilter.getParsedHtmlContent(contentStream, baseUrl,
+				// contentType);
 			} else {
 				return new ByteArrayContent(contentType, ByteStreams.toByteArray(contentStream));
 			}
