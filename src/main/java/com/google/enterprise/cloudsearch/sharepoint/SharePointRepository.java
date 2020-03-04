@@ -694,7 +694,8 @@ class SharePointRepository implements Repository {
 				return deleteItemOrPushErrorForInvalidPayload(item);
 			}
 
-			System.out.println("\n\n type: " + objectType + "\n\n");
+			log.info("\n\n objectType: " + objectType + ", status: " + item.getStatus().getCode() + ", itemName: "
+					+ item.getName() + "\n\n");
 
 			if (SharePointObject.NAMED_RESOURCE.equals(objectType)) {
 				// Do not process named resource here.
@@ -731,6 +732,7 @@ class SharePointRepository implements Repository {
 				return getListDocContent(item, siteConnector, payloadObject);
 			}
 			if (SharePointObject.LIST_ITEM.equals(objectType)) {
+				log.info("\n\n LIST_ITEM itemUrl: " + itemUrl);
 				return getListItemDocContent(item, siteConnector, payloadObject);
 			}
 			if (SharePointObject.ATTACHMENT.equals(objectType)) {
@@ -1008,6 +1010,7 @@ class SharePointRepository implements Repository {
 		Streams.concat(childWebs.entrySet().stream(), childList.entrySet().stream())
 				.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
 		batchRequest.add(builder.build());
+		batchRequest.add(ApiOperations.deleteItem(polledItem.getName()));
 		return ApiOperations.batch(batchRequest.iterator());
 	}
 
@@ -1038,7 +1041,8 @@ class SharePointRepository implements Repository {
 		Streams.concat(childWebs.entrySet().stream(), childList.entrySet().stream())
 				.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
 
-		return builder.build();
+		return ApiOperations
+				.batch(Arrays.asList(builder.build(), ApiOperations.deleteItem(polledItem.getName())).iterator());
 	}
 
 	private ApiOperation getListDocContent(Item polledItem, SiteConnector scConnector, SharePointObject listObject)
@@ -1069,7 +1073,8 @@ class SharePointRepository implements Repository {
 
 		PushItems.Builder builder = new PushItems.Builder();
 		foldersMap.entrySet().forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
-		return builder.build();
+		return ApiOperations
+				.batch(Arrays.asList(builder.build(), ApiOperations.deleteItem(polledItem.getName())).iterator());
 	}
 
 	private ApiOperation getListItemDocContent(Item polledItem, SiteConnector scConnector, SharePointObject itemObject)
@@ -1133,68 +1138,53 @@ class SharePointRepository implements Repository {
 		boolean parentIsList = folderDocId.equals(rootFolderDocId);
 		String parentScopeId;
 		String listScopeId = l.getMetadata().getScopeID().toLowerCase(Locale.ENGLISH);
-		String possibleAclParent;
-		if (parentIsList) {
-			parentScopeId = listScopeId;
-			itemBuilder.setContainerName(withValue(l.getMetadata().getID()));
-			possibleAclParent = l.getMetadata().getID();
-		} else {
-			// If current item has same scope id as list then inheritance is not
-			// broken irrespective of current item is inside folder or not.
-			// Since item inside folder points to folder as container, we always need to
-			// fetch list item
-			// for folder irrespective of ACL inheritance.
-
-			// Instead of using getUrlSegments and getContent(ListItem), we could
-			// use just getContent(Folder). However, getContent(Folder) always
-			// returns children which could make the call very expensive. In
-			// addition, getContent(ListItem) returns all the metadata for the
-			// folder instead of just its scope so if in the future we need more
-			// metadata we will already have it. GetContentEx(Folder) may provide
-			// a way to get the folder's scope without its children, but it wasn't
-			// investigated.
-			Holder<String> folderListId = new Holder<String>();
-			Holder<String> folderItemId = new Holder<String>();
-			boolean folderResult = scConnector.getSiteDataClient().getUrlSegments(folderDocId, folderListId,
-					folderItemId);
-			if (!folderResult) {
-				throw new IOException("Could not find parent folder's itemId");
-			}
-			if (!listId.value.equals(folderListId.value)) {
-				throw new RepositoryException.Builder().setErrorMessage("Unexpected listId value " + listId.value)
-						.setErrorType(ErrorType.CLIENT_ERROR).build();
-			}
-			ItemData folderItem = scConnector.getSiteDataClient().getContentItem(listId.value, folderItemId.value);
-			Element folderData = getFirstChildWithName(folderItem.getXml(), DATA_ELEMENT);
-			Element folderRow = getChildrenWithName(folderData, ROW_ELEMENT).get(0);
-			parentScopeId = getValueFromIdPrefixedField(folderRow, OWS_SCOPEID_ATTRIBUTE).toLowerCase(Locale.ENGLISH);
-			String folderObjectId = getUniqueIdFromRow(folderRow);
-			itemBuilder.setContainerName(withValue(folderObjectId));
-			possibleAclParent = folderObjectId;
-		}
-		Acl.Builder aclBuilder = new Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE);
-		if (scopeId.equals(parentScopeId)) {
-			aclBuilder.setInheritFrom(possibleAclParent);
-		} else {
-			// We have to search for the correct scope within the scopes element.
-			// The scope provided in the metadata is for the parent list, not for
-			// the item
-			Scopes scopes = getFirstChildOfType(xml, Scopes.class);
-			boolean hasAcl = false;
-			assert scopes != null;
-			for (Scopes.Scope scope : scopes.getScope()) {
-				if (scope.getId().toLowerCase(Locale.ENGLISH).equals(scopeId)) {
-					aclBuilder.setReaders(scConnector.getScopeAcl(scope)).setInheritFrom(scConnector.getSiteUrl(),
-							SITE_COLLECTION_ADMIN_FRAGMENT);
-					hasAcl = true;
-					break;
-				}
-			}
-			if (!hasAcl) {
-				throw new IOException("Unable to find permission scope for item: " + polledItem.getName());
-			}
-		}
-		itemBuilder.setAcl(aclBuilder.build());
+		/*
+		 * String possibleAclParent; if (parentIsList) { parentScopeId = listScopeId;
+		 * itemBuilder.setContainerName(withValue(l.getMetadata().getID()));
+		 * possibleAclParent = l.getMetadata().getID(); } else { // If current item has
+		 * same scope id as list then inheritance is not // broken irrespective of
+		 * current item is inside folder or not. // Since item inside folder points to
+		 * folder as container, we always need to // fetch list item // for folder
+		 * irrespective of ACL inheritance.
+		 * 
+		 * // Instead of using getUrlSegments and getContent(ListItem), we could // use
+		 * just getContent(Folder). However, getContent(Folder) always // returns
+		 * children which could make the call very expensive. In // addition,
+		 * getContent(ListItem) returns all the metadata for the // folder instead of
+		 * just its scope so if in the future we need more // metadata we will already
+		 * have it. GetContentEx(Folder) may provide // a way to get the folder's scope
+		 * without its children, but it wasn't // investigated. Holder<String>
+		 * folderListId = new Holder<String>(); Holder<String> folderItemId = new
+		 * Holder<String>(); boolean folderResult =
+		 * scConnector.getSiteDataClient().getUrlSegments(folderDocId, folderListId,
+		 * folderItemId); if (!folderResult) { throw new
+		 * IOException("Could not find parent folder's itemId"); } if
+		 * (!listId.value.equals(folderListId.value)) { throw new
+		 * RepositoryException.Builder().setErrorMessage("Unexpected listId value " +
+		 * listId.value) .setErrorType(ErrorType.CLIENT_ERROR).build(); } ItemData
+		 * folderItem = scConnector.getSiteDataClient().getContentItem(listId.value,
+		 * folderItemId.value); Element folderData =
+		 * getFirstChildWithName(folderItem.getXml(), DATA_ELEMENT); Element folderRow =
+		 * getChildrenWithName(folderData, ROW_ELEMENT).get(0); parentScopeId =
+		 * getValueFromIdPrefixedField(folderRow,
+		 * OWS_SCOPEID_ATTRIBUTE).toLowerCase(Locale.ENGLISH); String folderObjectId =
+		 * getUniqueIdFromRow(folderRow);
+		 * itemBuilder.setContainerName(withValue(folderObjectId)); possibleAclParent =
+		 * folderObjectId; } Acl.Builder aclBuilder = new
+		 * Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE); if
+		 * (scopeId.equals(parentScopeId)) {
+		 * aclBuilder.setInheritFrom(possibleAclParent); } else { // We have to search
+		 * for the correct scope within the scopes element. // The scope provided in the
+		 * metadata is for the parent list, not for // the item Scopes scopes =
+		 * getFirstChildOfType(xml, Scopes.class); boolean hasAcl = false; assert scopes
+		 * != null; for (Scopes.Scope scope : scopes.getScope()) { if
+		 * (scope.getId().toLowerCase(Locale.ENGLISH).equals(scopeId)) {
+		 * aclBuilder.setReaders(scConnector.getScopeAcl(scope)).setInheritFrom(
+		 * scConnector.getSiteUrl(), SITE_COLLECTION_ADMIN_FRAGMENT); hasAcl = true;
+		 * break; } } if (!hasAcl) { throw new
+		 * IOException("Unable to find permission scope for item: " +
+		 * polledItem.getName()); } } itemBuilder.setAcl(aclBuilder.build());
+		 */
 		// This should be in the form of "1234;#0". We want to extract the 0.
 		String type = getValueFromIdPrefixedField(row, OWS_FSOBJTYPE_ATTRIBUTE);
 		boolean isFolder = "1".equals(type);
@@ -1235,7 +1225,8 @@ class SharePointRepository implements Repository {
 			PushItems.Builder builder = new PushItems.Builder();
 			Streams.concat(attachmentsMap.entrySet().stream(), foldersMap.entrySet().stream())
 					.forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
-			return builder.build();
+			return ApiOperations
+					.batch(Arrays.asList(builder.build(), ApiOperations.deleteItem(polledItem.getName())).iterator());
 		}
 		String contentTypeId = row.getAttribute(OWS_CONTENTTYPEID_ATTRIBUTE);
 		boolean isDocument = (contentTypeId != null) && contentTypeId.startsWith(CONTENTTYPEID_DOCUMENT_PREFIX);
@@ -1251,7 +1242,8 @@ class SharePointRepository implements Repository {
 
 			PushItems.Builder builder = new PushItems.Builder();
 			attachmentsMap.entrySet().stream().forEach(x -> builder.addPushItem(x.getKey(), x.getValue()));
-			return builder.build();
+			return ApiOperations
+					.batch(Arrays.asList(builder.build(), ApiOperations.deleteItem(polledItem.getName())).iterator());
 		}
 		Item item = itemBuilder.build();
 		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
@@ -1319,11 +1311,13 @@ class SharePointRepository implements Repository {
 		IndexingItemBuilder itemBuilder = IndexingItemBuilder.fromConfiguration(polledItem.getName());
 		itemBuilder.setTitle(withValue(getFileNameFromUrl(attachmentUrl)));
 		AbstractInputStreamContent content = getFileContent(attachmentUrl, itemBuilder, false);
-		String parentItem = getUniqueIdFromRow(row);
-		Acl acl = new Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE).setInheritFrom(parentItem)
-				.build();
-		itemBuilder.setAcl(acl).setPayload(polledItem.decodePayload()).setContainerName(withValue(parentItem))
-				.setItemType(ItemType.CONTENT_ITEM);
+		/*
+		 * String parentItem = getUniqueIdFromRow(row); Acl acl = new
+		 * Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE).
+		 * setInheritFrom(parentItem) .build();
+		 * itemBuilder.setAcl(acl).setPayload(polledItem.decodePayload()).
+		 * setContainerName(withValue(parentItem)) .setItemType(ItemType.CONTENT_ITEM);
+		 */
 
 		Item item = itemBuilder.build();
 		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
