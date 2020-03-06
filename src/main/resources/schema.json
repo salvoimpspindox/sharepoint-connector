@@ -1,0 +1,132 @@
+{
+  "objectDefinitions": [
+    {
+      "name": "document",
+      "propertyDefinitions": [
+        {
+          "name": "TitoloNormativa",
+          "isReturnable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "titolo"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Titolo Normativa"
+          }
+        },
+		{
+          "name": "TipoNormativa",
+          "isReturnable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "tipo"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Tipo Normativa"
+          }
+        },
+		{
+          "name": "StatoNormativa",
+          "isReturnable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "stato"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Stato Normativa"
+          }
+        },
+		{
+          "name": "Versione",
+          "isReturnable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "versione"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Versione"
+          }
+        },
+		{
+          "name": "UniqueId",
+          "isReturnable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "id"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Id Univoco"
+          }
+        },
+		{
+          "name": "Azienda",
+          "isReturnable": false,
+		  "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "azienda"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Azienda"
+          }
+        },
+		{
+          "name": "Keyword",
+          "isReturnable": false,
+		  "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "keyword"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Keyword"
+          }
+        },
+		{
+          "name": "FlagPrincipale",
+          "isReturnable": false,
+		  "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "principale"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Principale"
+          }
+        }
+      ]
+    }
+  ]
+}

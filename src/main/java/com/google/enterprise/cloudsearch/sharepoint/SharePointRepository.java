@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
@@ -66,7 +65,6 @@ import com.google.api.client.http.HttpMediaType;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.Strings;
 import com.google.api.services.cloudsearch.v1.model.Item;
-import com.google.api.services.cloudsearch.v1.model.Principal;
 import com.google.api.services.cloudsearch.v1.model.PushItem;
 import com.google.api.services.cloudsearch.v1.model.RepositoryError;
 import com.google.common.annotations.VisibleForTesting;
@@ -86,9 +84,6 @@ import com.google.enterprise.cloudsearch.sdk.RepositoryException;
 import com.google.enterprise.cloudsearch.sdk.RepositoryException.ErrorType;
 import com.google.enterprise.cloudsearch.sdk.StartupException;
 import com.google.enterprise.cloudsearch.sdk.config.Configuration;
-import com.google.enterprise.cloudsearch.sdk.indexing.Acl;
-import com.google.enterprise.cloudsearch.sdk.indexing.Acl.InheritanceType;
-import com.google.enterprise.cloudsearch.sdk.indexing.ContentTemplate;
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingItemBuilder;
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingItemBuilder.FieldOrValue;
 import com.google.enterprise.cloudsearch.sdk.indexing.IndexingItemBuilder.ItemType;
@@ -113,7 +108,6 @@ import com.microsoft.schemas.sharepoint.soap.SPList;
 import com.microsoft.schemas.sharepoint.soap.SPListItem;
 import com.microsoft.schemas.sharepoint.soap.SPSite;
 import com.microsoft.schemas.sharepoint.soap.SPWeb;
-import com.microsoft.schemas.sharepoint.soap.Scopes;
 import com.microsoft.schemas.sharepoint.soap.Site;
 import com.microsoft.schemas.sharepoint.soap.Sites;
 import com.microsoft.schemas.sharepoint.soap.TrueFalseType;
@@ -156,15 +150,6 @@ class SharePointRepository implements Repository {
 	private static final String OWS_MODIFIED_ATTRIBUTE = "ows_Modified";
 	/** The time metadata or content was created. */
 	private static final String OWS_CREATED_ATTRIBUTE = "ows_Created";
-	/**
-	 * Row attribute guaranteed to be in ListItem responses. See
-	 * http://msdn.microsoft.com/en-us/library/dd929205.aspx . Provides scope id
-	 * used for permissions. Note that the casing is different than documented; this
-	 * is simply because of a documentation bug.
-	 */
-	private static final String OWS_SCOPEID_ATTRIBUTE = "ows_ScopeId";
-	/** Relative folder path for an item */
-	private static final String OWS_FILEDIRREF_ATTRIBUTE = "ows_FileDirRef";
 	/**
 	 * Row attribute guaranteed to be in ListItem responses. See
 	 * http://msdn.microsoft.com/en-us/library/dd929205.aspx . Provides ability to
@@ -214,11 +199,6 @@ class SharePointRepository implements Repository {
 	});
 	private final ThreadLocal<DateFormat> createdDateFormat = ThreadLocal.withInitial(() -> {
 		DateFormat df = new SimpleDateFormat(CREATED_DATE_LIST_ITEM_FORMAT, Locale.ENGLISH);
-		df.setTimeZone(gmt);
-		return df;
-	});
-	private final ThreadLocal<DateFormat> listLastModifiedDateFormat = ThreadLocal.withInitial(() -> {
-		DateFormat df = new SimpleDateFormat(MODIFIED_DATE_LIST_FORMAT, Locale.ENGLISH);
 		df.setTimeZone(gmt);
 		return df;
 	});
@@ -285,8 +265,6 @@ class SharePointRepository implements Repository {
 	private NtlmAuthenticator ntlmAuthenticator;
 	private HttpClient httpClient;
 	private SharePointIncrementalCheckpoint initIncrementalCheckpoint;
-	private ContentTemplate listItemContentTemplate;
-	private HtmlContentFilter htmlContentFilter;
 
 	SharePointRepository() {
 		this(new HttpClientImpl.Builder(), new SiteConnectorFactoryImpl.Builder(),
@@ -352,8 +330,6 @@ class SharePointRepository implements Repository {
 				.setStripDomainInUserPrincipals(sharepointConfiguration.isStripDomainInUserPrincipals())
 				.setSharePointDeploymentType(sharepointConfiguration.getSharePointDeploymentType()).build();
 		initIncrementalCheckpoint = computeIncrementalCheckpoint();
-		listItemContentTemplate = ContentTemplate.fromConfiguration("sharepointItem");
-		htmlContentFilter = HtmlContentFilter.fromConfiguration();
 	}
 
 	@Override
@@ -993,16 +969,6 @@ class SharePointRepository implements Repository {
 					scConnector.getWebUrl());
 			return ApiOperations.deleteItem(polledItem.getName());
 		}
-		List<Principal> admins = scConnector.getSiteCollectionAdmins(rootWeb);
-		Acl.Builder siteAdmins = new Acl.Builder().setReaders(admins);
-		String siteAdminFragmentId = Acl.fragmentId(polledItem.getName(), SITE_COLLECTION_ADMIN_FRAGMENT);
-		SharePointObject siteAdminObject = new SharePointObject.Builder(SharePointObject.NAMED_RESOURCE)
-				.setSiteId(site.getMetadata().getID()).setObjectId(site.getMetadata().getID())
-				.setUrl(siteAdminFragmentId).build();
-		if (!sharepointConfiguration.isSiteCollectionUrl()) {
-			siteAdmins.setInheritFrom(VIRTUAL_SERVER_ID);
-			siteAdmins.setInheritanceType(InheritanceType.PARENT_OVERRIDE);
-		}
 
 		Map<String, PushItem> childWebs = getChildWebEntries(scConnector, site.getMetadata().getID(), rootWeb);
 		Map<String, PushItem> childList = getChildListEntries(scConnector, site.getMetadata().getID(), rootWeb);
@@ -1020,19 +986,6 @@ class SharePointRepository implements Repository {
 		if ("True".equals(currentWeb.getMetadata().getNoIndex())) {
 			log.log(Level.INFO, "Deleting web [{0}], since web is marked as NoIndex.", scConnector.getWebUrl());
 			return ApiOperations.deleteItem(polledItem.getName());
-		}
-		String parentWebUrl = scConnector.getWebParentUrl();
-		SiteConnector parentSiteConnector = getSiteConnector(scConnector.getSiteUrl(), parentWebUrl);
-		Web parentWeb = parentSiteConnector.getSiteDataClient().getContentWeb();
-		boolean inheritPermissions = Objects.equals(currentWeb.getMetadata().getScopeID(),
-				parentWeb.getMetadata().getScopeID());
-
-		Acl.Builder aclBuilder = new Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE);
-		if (inheritPermissions) {
-			aclBuilder.setInheritFrom(parentWebUrl);
-		} else {
-			aclBuilder.setReaders(scConnector.getWebAcls(currentWeb));
-			aclBuilder.setInheritFrom(scConnector.getSiteUrl(), SITE_COLLECTION_ADMIN_FRAGMENT);
 		}
 
 		Map<String, PushItem> childWebs = getChildWebEntries(scConnector, webObject.getSiteId(), currentWeb);
@@ -1120,82 +1073,24 @@ class SharePointRepository implements Repository {
 			}
 		}
 		itemBuilder.setTitle(withValue(row.getAttribute(OWS_ITEM_TITLE)));
-		// This should be in the form of "1234;#{GUID}". We want to extract the
-		// {GUID}.
-		String scopeId = getValueFromIdPrefixedField(row, OWS_SCOPEID_ATTRIBUTE);
-		scopeId = scopeId.toLowerCase(Locale.ENGLISH);
-		// This should be in the form of "1234;#site/list/path". We want to
-		// extract the site/list/path. Path relative to host, even though it
-		// doesn't have a leading '/'.
-		String rawFileDirRef = getValueFromIdPrefixedField(row, OWS_FILEDIRREF_ATTRIBUTE);
-		String folderDocId = scConnector.encodeDocId("/" + rawFileDirRef);
-		String rootFolderDocId = scConnector.encodeDocId(l.getMetadata().getRootFolder());
-		// If the parent is a list, folderDocId will be same as
-		// rootFolderDocId. If inheritance chain is not
-		// broken, item will inherit its permission from list.
-		// If parent is a folder, item will inherit its permissions from parent
-		// folder.
-		boolean parentIsList = folderDocId.equals(rootFolderDocId);
-		String parentScopeId;
-		String listScopeId = l.getMetadata().getScopeID().toLowerCase(Locale.ENGLISH);
-		/*
-		 * String possibleAclParent; if (parentIsList) { parentScopeId = listScopeId;
-		 * itemBuilder.setContainerName(withValue(l.getMetadata().getID()));
-		 * possibleAclParent = l.getMetadata().getID(); } else { // If current item has
-		 * same scope id as list then inheritance is not // broken irrespective of
-		 * current item is inside folder or not. // Since item inside folder points to
-		 * folder as container, we always need to // fetch list item // for folder
-		 * irrespective of ACL inheritance.
-		 * 
-		 * // Instead of using getUrlSegments and getContent(ListItem), we could // use
-		 * just getContent(Folder). However, getContent(Folder) always // returns
-		 * children which could make the call very expensive. In // addition,
-		 * getContent(ListItem) returns all the metadata for the // folder instead of
-		 * just its scope so if in the future we need more // metadata we will already
-		 * have it. GetContentEx(Folder) may provide // a way to get the folder's scope
-		 * without its children, but it wasn't // investigated. Holder<String>
-		 * folderListId = new Holder<String>(); Holder<String> folderItemId = new
-		 * Holder<String>(); boolean folderResult =
-		 * scConnector.getSiteDataClient().getUrlSegments(folderDocId, folderListId,
-		 * folderItemId); if (!folderResult) { throw new
-		 * IOException("Could not find parent folder's itemId"); } if
-		 * (!listId.value.equals(folderListId.value)) { throw new
-		 * RepositoryException.Builder().setErrorMessage("Unexpected listId value " +
-		 * listId.value) .setErrorType(ErrorType.CLIENT_ERROR).build(); } ItemData
-		 * folderItem = scConnector.getSiteDataClient().getContentItem(listId.value,
-		 * folderItemId.value); Element folderData =
-		 * getFirstChildWithName(folderItem.getXml(), DATA_ELEMENT); Element folderRow =
-		 * getChildrenWithName(folderData, ROW_ELEMENT).get(0); parentScopeId =
-		 * getValueFromIdPrefixedField(folderRow,
-		 * OWS_SCOPEID_ATTRIBUTE).toLowerCase(Locale.ENGLISH); String folderObjectId =
-		 * getUniqueIdFromRow(folderRow);
-		 * itemBuilder.setContainerName(withValue(folderObjectId)); possibleAclParent =
-		 * folderObjectId; } Acl.Builder aclBuilder = new
-		 * Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE); if
-		 * (scopeId.equals(parentScopeId)) {
-		 * aclBuilder.setInheritFrom(possibleAclParent); } else { // We have to search
-		 * for the correct scope within the scopes element. // The scope provided in the
-		 * metadata is for the parent list, not for // the item Scopes scopes =
-		 * getFirstChildOfType(xml, Scopes.class); boolean hasAcl = false; assert scopes
-		 * != null; for (Scopes.Scope scope : scopes.getScope()) { if
-		 * (scope.getId().toLowerCase(Locale.ENGLISH).equals(scopeId)) {
-		 * aclBuilder.setReaders(scConnector.getScopeAcl(scope)).setInheritFrom(
-		 * scConnector.getSiteUrl(), SITE_COLLECTION_ADMIN_FRAGMENT); hasAcl = true;
-		 * break; } } if (!hasAcl) { throw new
-		 * IOException("Unable to find permission scope for item: " +
-		 * polledItem.getName()); } } itemBuilder.setAcl(aclBuilder.build());
-		 */
-		// This should be in the form of "1234;#0". We want to extract the 0.
+
 		String type = getValueFromIdPrefixedField(row, OWS_FSOBJTYPE_ATTRIBUTE);
 		boolean isFolder = "1".equals(type);
 		Element schemaElement = getFirstChildWithName(xml, SCHEMA_ELEMENT);
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
 		if (extractedMetadataValues.get("ContestoVisibilita").iterator().hasNext()) {
 			String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
-			// SALVO
 			if (contestoVisibilita != null) {
 				Arrays.asList(contestoVisibilita.split(",")).forEach(x -> {
 					extractedMetadataValues.put("Azienda", x);
+				});
+			}
+		}
+		if (extractedMetadataValues.get("Keywords").iterator().hasNext()) {
+			String keywords = (String) extractedMetadataValues.get("Keywords").iterator().next();
+			if (keywords != null) {
+				Arrays.asList(keywords.split(",")).forEach(x -> {
+					extractedMetadataValues.put("Keyword", x);
 				});
 			}
 		}
@@ -1261,10 +1156,6 @@ class SharePointRepository implements Repository {
 		return docBuilder.setItem(item).build();
 	}
 
-	private static void addChildIdsToRepositoryDoc(RepositoryDoc.Builder docBuilder, Map<String, PushItem> entries) {
-		entries.entrySet().stream().forEach(e -> docBuilder.addChildId(e.getKey(), e.getValue()));
-	}
-
 	private SharePointUrl buildSharePointUrl(String url) throws URISyntaxException {
 		return new SharePointUrl.Builder(url)
 				.setPerformBrowserLeniency(sharepointConfiguration.isPerformBrowserLeniency()).build();
@@ -1311,13 +1202,6 @@ class SharePointRepository implements Repository {
 		IndexingItemBuilder itemBuilder = IndexingItemBuilder.fromConfiguration(polledItem.getName());
 		itemBuilder.setTitle(withValue(getFileNameFromUrl(attachmentUrl)));
 		AbstractInputStreamContent content = getFileContent(attachmentUrl, itemBuilder, false);
-		/*
-		 * String parentItem = getUniqueIdFromRow(row); Acl acl = new
-		 * Acl.Builder().setInheritanceType(InheritanceType.PARENT_OVERRIDE).
-		 * setInheritFrom(parentItem) .build();
-		 * itemBuilder.setAcl(acl).setPayload(polledItem.decodePayload()).
-		 * setContainerName(withValue(parentItem)) .setItemType(ItemType.CONTENT_ITEM);
-		 */
 
 		Item item = itemBuilder.build();
 		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
@@ -1580,16 +1464,6 @@ class SharePointRepository implements Repository {
 			if (elementHasName(child, name)) {
 				return child;
 			}
-		}
-		return null;
-	}
-
-	private static <T> T getFirstChildOfType(Xml xml, Class<T> type) {
-		for (Object oChild : xml.getAny()) {
-			if (!type.isInstance(oChild)) {
-				continue;
-			}
-			return type.cast(oChild);
 		}
 		return null;
 	}
