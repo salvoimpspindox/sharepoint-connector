@@ -23,7 +23,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "tipo"
@@ -38,7 +38,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "stato"
@@ -53,7 +53,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "versione"
@@ -68,7 +68,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "id"
@@ -84,7 +84,7 @@
 		  "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "azienda"
@@ -112,14 +112,30 @@
         },
 		{
           "name": "FlagPrincipale",
-          "isReturnable": false,
-		  "isRepeatable": true,
+          "isReturnable": true,
+		  "isRepeatable": false,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "principale"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Principale"
+          }
+        }
+		{
+          "name": "FlagSocietaTerze",
+          "isReturnable": false,
+		  "isRepeatable": false,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "NONE"
+            },
+            "operatorOptions": {
+              "operatorName": "societaterze"
             }
           },
           "displayOptions": {
