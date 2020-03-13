@@ -111,13 +111,10 @@
           }
         },
 		{
-          "name": "FlagPrincipale",
+          "name": "Principale",
           "isReturnable": true,
 		  "isRepeatable": false,
-          "textPropertyOptions": {
-            "retrievalImportance": {
-              "importance": "NONE"
-            },
+          "booleanPropertyOptions": {
             "operatorOptions": {
               "operatorName": "principale"
             }
@@ -127,19 +124,16 @@
           }
         },
 		{
-          "name": "FlagSocietaTerze",
+          "name": "SocietaTerze",
           "isReturnable": false,
 		  "isRepeatable": false,
-          "textPropertyOptions": {
-            "retrievalImportance": {
-              "importance": "NONE"
-            },
+          "booleanPropertyOptions": {
             "operatorOptions": {
               "operatorName": "societaterze"
             }
           },
           "displayOptions": {
-            "displayLabel": "Principale"
+            "displayLabel": "Societa Terze"
           }
         }
       ]
