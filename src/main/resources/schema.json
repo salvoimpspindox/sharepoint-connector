@@ -125,7 +125,7 @@
           "displayOptions": {
             "displayLabel": "Principale"
           }
-        }
+        },
 		{
           "name": "FlagSocietaTerze",
           "isReturnable": false,

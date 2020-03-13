@@ -688,6 +688,11 @@ class SharePointRepository implements Repository {
 					? payloadObject.getUrl()
 					: item.getName();
 
+			if (itemUrl.indexOf("InboundQueue") != -1) {
+				log.info("\n\n Item containing InboundQueue not wanted, itemUrl: " + itemUrl);
+				return ApiOperations.deleteItem(item.getName());
+			}
+
 			SiteConnector siteConnector;
 			try {
 				siteConnector = getConnectorForDocId(itemUrl);
@@ -708,7 +713,6 @@ class SharePointRepository implements Repository {
 				return getListDocContent(item, siteConnector, payloadObject);
 			}
 			if (SharePointObject.LIST_ITEM.equals(objectType)) {
-				log.info("\n\n LIST_ITEM itemUrl: " + itemUrl);
 				return getListItemDocContent(item, siteConnector, payloadObject);
 			}
 			if (SharePointObject.ATTACHMENT.equals(objectType)) {
@@ -1130,7 +1134,11 @@ class SharePointRepository implements Repository {
 			itemBuilder.setItemType(ItemType.CONTENT_ITEM);
 			// SALVO
 			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
-			docBuilder.setContent(getFileContent(itemObject.getUrl(), itemBuilder, true), ContentFormat.RAW);
+			AbstractInputStreamContent fileContent = getFileContent(itemObject.getUrl(), itemBuilder, true);
+			if (fileContent == null)
+			return ApiOperations.deleteItem(polledItem.getName());
+
+			docBuilder.setContent(fileContent, ContentFormat.RAW);
 		} else {
 			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,
 					itemObject);
@@ -1202,6 +1210,8 @@ class SharePointRepository implements Repository {
 		IndexingItemBuilder itemBuilder = IndexingItemBuilder.fromConfiguration(polledItem.getName());
 		itemBuilder.setTitle(withValue(getFileNameFromUrl(attachmentUrl)));
 		AbstractInputStreamContent content = getFileContent(attachmentUrl, itemBuilder, false);
+		if (content == null)
+			return ApiOperations.deleteItem(polledItem.getName());
 
 		Item item = itemBuilder.build();
 		if (HTML_MEDIA_TYPE.equals(new HttpMediaType(item.getMetadata().getMimeType()))) {
@@ -1302,10 +1312,8 @@ class SharePointRepository implements Repository {
 			throws IOException {
 		checkNotNull(item, "item can not be null");
 		SharePointUrl sharepointFileUrl;
-		String baseUrl;
 		try {
 			sharepointFileUrl = buildSharePointUrl(fileUrl);
-			baseUrl = sharepointFileUrl.getRootUrl();
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -1343,10 +1351,7 @@ class SharePointRepository implements Repository {
 		try (InputStream contentStream = fi.getContents()) {
 			if (isHtmlContent(contentType)) {
 				log.warning("\n\nHtml content not wanted\n\n");
-				// SALVO TODO FIX
 				return null;
-				// return htmlContentFilter.getParsedHtmlContent(contentStream, baseUrl,
-				// contentType);
 			} else {
 				return new ByteArrayContent(contentType, ByteStreams.toByteArray(contentStream));
 			}
