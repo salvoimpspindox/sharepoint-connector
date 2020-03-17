@@ -1100,14 +1100,17 @@ class SharePointRepository implements Repository {
 		}
 		if (extractedMetadataValues.get("FlagPrincipale").iterator().hasNext()) {
 			String principale = (String) extractedMetadataValues.get("FlagPrincipale").iterator().next();
-					extractedMetadataValues.put("Principale", principale.equals("1"));
-			
+					extractedMetadataValues.put("Principale", principale.equals("1"));	
 		}
 		if (extractedMetadataValues.get("FlagSocietaTerze").iterator().hasNext()) {
 			String societaTerze = (String) extractedMetadataValues.get("FlagSocietaTerze").iterator().next();
-					extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));
-			
+					extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));	
 		}
+		if (extractedMetadataValues.get("FlagVisibilitaRistretta").iterator().hasNext()) {
+			String societaTerze = (String) extractedMetadataValues.get("FlagVisibilitaRistretta").iterator().next();
+					extractedMetadataValues.put("VisibilitaRistretta", societaTerze.equals("1"));
+		}
+		
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
 		if (!Strings.isNullOrEmpty(objectType) && StructuredData.hasObjectDefinition(objectType)) {

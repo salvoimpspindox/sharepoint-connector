@@ -135,6 +135,19 @@
           "displayOptions": {
             "displayLabel": "Societa Terze"
           }
+        },
+		{
+          "name": "VisibilitaRistretta",
+          "isReturnable": false,
+		  "isRepeatable": false,
+          "booleanPropertyOptions": {
+            "operatorOptions": {
+              "operatorName": "visibilitaristretta"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Visibilita Ristretta"
+          }
         }
       ]
     }
