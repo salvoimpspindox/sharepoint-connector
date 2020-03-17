@@ -1106,9 +1106,9 @@ class SharePointRepository implements Repository {
 			String societaTerze = (String) extractedMetadataValues.get("FlagSocietaTerze").iterator().next();
 					extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));	
 		}
-		if (extractedMetadataValues.get("FlagVisibilitaRistretta").iterator().hasNext()) {
-			String societaTerze = (String) extractedMetadataValues.get("FlagVisibilitaRistretta").iterator().next();
-					extractedMetadataValues.put("VisibilitaRistretta", societaTerze.equals("1"));
+		if (extractedMetadataValues.get("FlagVisibilitRistretta").iterator().hasNext()) {
+			String visibilitaRistretta = (String) extractedMetadataValues.get("FlagVisibilitRistretta").iterator().next();
+					extractedMetadataValues.put("VisibilitaRistretta", visibilitaRistretta.equals("1"));
 		}
 		
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
