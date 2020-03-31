@@ -1113,8 +1113,8 @@ class SharePointRepository implements Repository {
 					.next();
 			extractedMetadataValues.put("VisibilitaRistretta", visibilitaRistretta.equals("1"));
 		}
-		if (extractedMetadataValues.get("AmbitiVisibilita").iterator().hasNext()) {
-			String scopes = (String) extractedMetadataValues.get("AmbitiVisibilita").iterator().next();
+		if (extractedMetadataValues.get("AmbitiVisibilit").iterator().hasNext()) {
+			String scopes = (String) extractedMetadataValues.get("AmbitiVisibilit").iterator().next();
 			if (scopes != null) {
 				Arrays.asList(scopes.split(",")).forEach(x -> {
 					extractedMetadataValues.put("Ambito", x);
