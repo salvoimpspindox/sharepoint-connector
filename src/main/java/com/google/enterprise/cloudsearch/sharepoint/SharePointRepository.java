@@ -53,6 +53,8 @@ import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -1100,17 +1102,34 @@ class SharePointRepository implements Repository {
 		}
 		if (extractedMetadataValues.get("FlagPrincipale").iterator().hasNext()) {
 			String principale = (String) extractedMetadataValues.get("FlagPrincipale").iterator().next();
-					extractedMetadataValues.put("Principale", principale.equals("1"));	
+			extractedMetadataValues.put("Principale", principale.equals("1"));
 		}
 		if (extractedMetadataValues.get("FlagSocietaTerze").iterator().hasNext()) {
 			String societaTerze = (String) extractedMetadataValues.get("FlagSocietaTerze").iterator().next();
-					extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));	
+			extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));
 		}
 		if (extractedMetadataValues.get("FlagVisibilitRistretta").iterator().hasNext()) {
-			String visibilitaRistretta = (String) extractedMetadataValues.get("FlagVisibilitRistretta").iterator().next();
-					extractedMetadataValues.put("VisibilitaRistretta", visibilitaRistretta.equals("1"));
+			String visibilitaRistretta = (String) extractedMetadataValues.get("FlagVisibilitRistretta").iterator()
+					.next();
+			extractedMetadataValues.put("VisibilitaRistretta", visibilitaRistretta.equals("1"));
 		}
-		
+		if (extractedMetadataValues.get("AmbitiVisibilita").iterator().hasNext()) {
+			String scopes = (String) extractedMetadataValues.get("AmbitiVisibilita").iterator().next();
+			if (scopes != null) {
+				Arrays.asList(scopes.split(",")).forEach(x -> {
+					extractedMetadataValues.put("Ambito", x);
+				});
+			}
+		}
+		if (extractedMetadataValues.get("ArgomentiSecondari").iterator().hasNext()) {
+			String otherTopics = (String) extractedMetadataValues.get("ArgomentiSecondari").iterator().next();
+			if (otherTopics != null) {
+				Arrays.asList(otherTopics.split(",")).forEach(x -> {
+					extractedMetadataValues.put("Argomento", x);
+				});
+			}
+		}
+
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
 		if (!Strings.isNullOrEmpty(objectType) && StructuredData.hasObjectDefinition(objectType)) {
@@ -1149,9 +1168,16 @@ class SharePointRepository implements Repository {
 			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
 			AbstractInputStreamContent fileContent = getFileContent(itemObject.getUrl(), itemBuilder, true);
 			if (fileContent == null)
-			return ApiOperations.deleteItem(polledItem.getName());
+				return ApiOperations.deleteItem(polledItem.getName());
 
-			docBuilder.setContent(fileContent, ContentFormat.RAW);
+			PDDocument doc = PDDocument.load(fileContent.getInputStream());
+			PDFTextStripper stripper = new PDFTextStripper();
+			stripper.setSortByPosition(true);
+			String textContent = stripper.getText(doc);
+			doc.close();
+			AbstractInputStreamContent content = new ByteArrayContent("text/plain; charset=utf-8",
+					textContent.getBytes("UTF-8"));
+			docBuilder.setContent(content, ContentFormat.TEXT);
 		} else {
 			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,
 					itemObject);
@@ -1587,4 +1613,5 @@ class SharePointRepository implements Repository {
 					.findFirst();
 		}
 	}
+
 }
