@@ -577,7 +577,7 @@ class SharePointRepository implements Repository {
 	}
 
 	private static boolean isModified(String change) {
-		return !"Unchanged".equals(change) && !"Delete".equals(change);
+		return !"Unchanged".equals(change) && !"Delete".equals(change) && !"UpdateShallow".equals(change);
 	}
 
 	private CheckpointCloseableIterable<ApiOperation> getChangesVirtualServerMode(
