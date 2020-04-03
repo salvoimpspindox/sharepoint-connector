@@ -253,7 +253,7 @@
             }
           },
           "displayOptions": {
-            "displayLabel": "argomento"
+            "displayLabel": "Argomento"
           }
         },
 		{
@@ -269,7 +269,24 @@
           "displayOptions": {
             "displayLabel": "Data Emanazione"
           }
-        }	
+        },
+		{
+          "name": "Processo",
+          "isReturnable": false,
+		  "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "NONE"
+            },
+            "operatorOptions": {
+              "operatorName": "processo",
+			  "exactMatchWithOperator": true
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Processo"
+          }
+        }
       ]
     }
   ]

@@ -1129,6 +1129,16 @@ class SharePointRepository implements Repository {
 				});
 			}
 		}
+		List<String> processesKeys = extractedMetadataValues.keySet().stream()
+				.filter(x -> x.contains("TaxonomyProcesso")).collect(Collectors.toList());
+		processesKeys.forEach(x -> {
+			String processes = (String) extractedMetadataValues.get(x).iterator().next();
+			if (processes.contains("|")) {
+				Arrays.asList(processes.split(";")).forEach(p -> {
+					extractedMetadataValues.put("Processo", p.split("\\|")[1].toUpperCase());
+				});
+			}
+		});
 
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
