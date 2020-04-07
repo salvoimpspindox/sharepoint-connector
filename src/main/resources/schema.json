@@ -6,7 +6,7 @@
         {
           "name": "TitoloNormativa",
           "isReturnable": true,
-		  "isSuggestable": true,
+          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "HIGHEST"
@@ -19,24 +19,24 @@
             "displayLabel": "Titolo Normativa"
           }
         },
-		{
+        {
           "name": "TipoNormativa",
           "isReturnable": true,
-		  "isSuggestable": true,
+          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "DEFAULT"
             },
             "operatorOptions": {
               "operatorName": "tipo",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Tipo Normativa"
           }
         },
-		{
+        {
           "name": "StatoNormativa",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -45,31 +45,31 @@
             },
             "operatorOptions": {
               "operatorName": "stato",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Stato Normativa"
           }
         },
-		{
+        {
           "name": "Protocollo",
           "isReturnable": true,
-		  "isSuggestable": true,
+          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "HIGHEST"
             },
             "operatorOptions": {
               "operatorName": "protocollo",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Numero Protocollo"
           }
         },
-		{
+        {
           "name": "NumeroEdizione",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -78,14 +78,14 @@
             },
             "operatorOptions": {
               "operatorName": "edizione",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Numero Edizione"
           }
         },
-		{
+        {
           "name": "UniqueId",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -100,45 +100,45 @@
             "displayLabel": "Id Univoco"
           }
         },
-		{
+        {
           "name": "Azienda",
           "isReturnable": false,
-		  "isRepeatable": true,
+          "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "azienda",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Azienda"
           }
         },
-		{
+        {
           "name": "Keyword",
           "isReturnable": true,
-		  "isSuggestable": true,
-		  "isRepeatable": true,
+          "isSuggestable": true,
+          "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "HIGHEST"
             },
             "operatorOptions": {
               "operatorName": "keyword",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Keyword"
           }
         },
-		{
+        {
           "name": "Principale",
           "isReturnable": true,
-		  "isRepeatable": false,
+          "isRepeatable": false,
           "booleanPropertyOptions": {
             "operatorOptions": {
               "operatorName": "principale"
@@ -148,10 +148,10 @@
             "displayLabel": "Principale"
           }
         },
-		{
+        {
           "name": "SocietaTerze",
           "isReturnable": false,
-		  "isRepeatable": false,
+          "isRepeatable": false,
           "booleanPropertyOptions": {
             "operatorOptions": {
               "operatorName": "societaterze"
@@ -161,10 +161,10 @@
             "displayLabel": "Societa Terze"
           }
         },
-		{
+        {
           "name": "VisibilitaRistretta",
           "isReturnable": false,
-		  "isRepeatable": false,
+          "isRepeatable": false,
           "booleanPropertyOptions": {
             "operatorOptions": {
               "operatorName": "visibilitaristretta"
@@ -174,7 +174,7 @@
             "displayLabel": "Visibilita Ristretta"
           }
         },
-		{
+        {
           "name": "Anno",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -183,14 +183,14 @@
             },
             "operatorOptions": {
               "operatorName": "anno",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Anno"
           }
         },
-		{
+        {
           "name": "EmittenteNorma",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -199,31 +199,31 @@
             },
             "operatorOptions": {
               "operatorName": "emittente",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Emittente Norma"
           }
         },
-		{
+        {
           "name": "Ambito",
           "isReturnable": false,
-		  "isRepeatable": true,
+          "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "ambito",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Ambito"
           }
         },
-		{
+        {
           "name": "Serie",
           "isReturnable": true,
           "textPropertyOptions": {
@@ -232,55 +232,55 @@
             },
             "operatorOptions": {
               "operatorName": "serie",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Serie"
           }
         },
-		{
+        {
           "name": "Argomento",
           "isReturnable": false,
-		  "isRepeatable": true,
+          "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "argomento",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
             "displayLabel": "Argomento"
           }
         },
-		{
+        {
           "name": "DataPubblicazione",
           "isReturnable": true,
           "timestampPropertyOptions": {
             "operatorOptions": {
               "operatorName": "datapubblicazione",
-			  "lessThanOperatorName": "datapubblicazionebefore",
-			  "greaterThanOperatorName": "datapubblicazioneafter"
+              "lessThanOperatorName": "datapubblicazionebefore",
+              "greaterThanOperatorName": "datapubblicazioneafter"
             }
           },
           "displayOptions": {
             "displayLabel": "Data Pubblicazione"
           }
         },
-		{
+        {
           "name": "Processo",
           "isReturnable": false,
-		  "isRepeatable": true,
+          "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
               "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "processo",
-			  "exactMatchWithOperator": true
+              "exactMatchWithOperator": true
             }
           },
           "displayOptions": {
