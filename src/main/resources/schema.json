@@ -257,17 +257,17 @@
           }
         },
         {
-          "name": "DataPubblicazione",
+          "name": "DataEmanazione",
           "isReturnable": true,
           "timestampPropertyOptions": {
             "operatorOptions": {
-              "operatorName": "datapubblicazione",
-              "lessThanOperatorName": "datapubblicazionebefore",
-              "greaterThanOperatorName": "datapubblicazioneafter"
+              "operatorName": "dataemanazione",
+              "lessThanOperatorName": "dataemanazionebefore",
+              "greaterThanOperatorName": "dataemanazioneafter"
             }
           },
           "displayOptions": {
-            "displayLabel": "Data Pubblicazione"
+            "displayLabel": "Data Emanazione"
           }
         },
         {
