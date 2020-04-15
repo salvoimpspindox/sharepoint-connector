@@ -250,6 +250,30 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<tasks>
+								<copy
+									file="${basedir}/src/main/resources/Note_Installazione.txt"
+									tofile="${basedir}/deploy/Note_Installazione.txt" />
+								<copy
+									file="${basedir}/target/google-cloudsearch-sharepoint-connector-v1-0.0.5.zip"
+									tofile="${basedir}/deploy/google-cloudsearch-sharepoint-connector-v1-0.0.5.zip" />
+							</tasks>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 

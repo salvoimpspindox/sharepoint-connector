@@ -1,0 +1,33 @@
+################################################################
+File utilizzato per trasmettere le istruzioni d'installazione ai 
+sistemisti, indicare le macchine di destinazione, il path in cui
+copiare il software, l' utenza con cui lanciare gli script, gli 
+script da lanciare...
+################################################################
+
+Nella cartella ./deploy viene rilasciato il file google-cloudsearch-sharepoint-connector-v1-0.0.5.zip
+e il file Note_Installazione.txt
+
+Copiare il file zip in
+
+/var/share/ubiss-npn-api/
+
+Unzippare il contentuo del file zip
+
+unzip google-cloudsearch-sharepoint-connector-v1-0.0.5.zip
+
+Entrare nella cartella google-cloudsearch-sharepoint-connector-v1-0.0.5
+
+cd google-cloudsearch-sharepoint-connector-v1-0.0.5
+
+Creare una cartella logs
+
+mkdir logs
+
+Dare i permessi ad importer.sh
+
+chmod +x importer.sh
+
+Eseguire importer.sh
+
+./importer.sh
