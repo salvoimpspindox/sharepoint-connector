@@ -1104,9 +1104,9 @@ class SharePointRepository implements Repository {
 			String principale = (String) extractedMetadataValues.get("FlagPrincipale").iterator().next();
 			extractedMetadataValues.put("Principale", principale.equals("1"));
 		}
-		if (extractedMetadataValues.get("FlagSocietaTerze").iterator().hasNext()) {
-			String societaTerze = (String) extractedMetadataValues.get("FlagSocietaTerze").iterator().next();
-			extractedMetadataValues.put("SocietaTerze", societaTerze.equals("1"));
+		if (extractedMetadataValues.get("FlagRetiEsterne").iterator().hasNext()) {
+			String retiEsterne = (String) extractedMetadataValues.get("FlagRetiEsterne").iterator().next();
+			extractedMetadataValues.put("RetiEsterne", retiEsterne.equals("1"));
 		}
 		if (extractedMetadataValues.get("FlagVisibilitRistretta").iterator().hasNext()) {
 			String visibilitaRistretta = (String) extractedMetadataValues.get("FlagVisibilitRistretta").iterator()

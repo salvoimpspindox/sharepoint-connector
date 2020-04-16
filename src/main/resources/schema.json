@@ -149,16 +149,16 @@
           }
         },
         {
-          "name": "SocietaTerze",
+          "name": "RetiEsterne",
           "isReturnable": false,
           "isRepeatable": false,
           "booleanPropertyOptions": {
             "operatorOptions": {
-              "operatorName": "societaterze"
+              "operatorName": "retiesterne"
             }
           },
           "displayOptions": {
-            "displayLabel": "Societa Terze"
+            "displayLabel": "Reti Esterne"
           }
         },
         {
