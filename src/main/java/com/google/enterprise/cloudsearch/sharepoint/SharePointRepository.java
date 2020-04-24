@@ -55,6 +55,8 @@ import javax.xml.ws.Holder;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+// import org.apache.pdfbox.pdmodel.PDDocument;
+// import org.apache.pdfbox.text.PDFTextStripper;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -1180,14 +1182,21 @@ class SharePointRepository implements Repository {
 			if (fileContent == null)
 				return ApiOperations.deleteItem(polledItem.getName());
 
-			PDDocument doc = PDDocument.load(fileContent.getInputStream());
-			PDFTextStripper stripper = new PDFTextStripper();
-			stripper.setSortByPosition(true);
-			String textContent = stripper.getText(doc);
-			doc.close();
-			AbstractInputStreamContent content = new ByteArrayContent("text/plain; charset=utf-8",
-					textContent.getBytes("UTF-8"));
-			docBuilder.setContent(content, ContentFormat.TEXT);
+			try {
+				PDDocument doc = PDDocument.load(fileContent.getInputStream());
+				PDFTextStripper stripper = new PDFTextStripper();
+				stripper.setSortByPosition(true);
+				String textContent = stripper.getText(doc);
+				doc.close();
+				AbstractInputStreamContent content = new ByteArrayContent("text/plain; charset=utf-8",
+						textContent.getBytes("UTF-8"));
+				docBuilder.setContent(content, ContentFormat.TEXT);
+			} catch (Exception ex) {
+				return ApiOperations.deleteItem(polledItem.getName());
+			}
+
+			// docBuilder.setContent(fileContent, ContentFormat.RAW);
+
 		} else {
 			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,
 					itemObject);
