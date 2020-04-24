@@ -28,6 +28,13 @@ Dare i permessi ad importer.sh
 
 chmod +x importer.sh
 
+Rinominare il file di configurazione relativo all'ambiente in connector-config.properties
+
+mv connector-config-collaudo-{ambiente}.properties connector-config.properties; es: mv connector-config-collaudo.properties connector-config.properties
+
 Eseguire importer.sh
 
 ./importer.sh
+
+Integrazione    npnl101t.hbl.local
+Collaudo        npnl101c.hbl.local

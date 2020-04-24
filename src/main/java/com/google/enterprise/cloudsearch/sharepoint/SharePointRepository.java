@@ -1194,7 +1194,6 @@ class SharePointRepository implements Repository {
 			} catch (Exception ex) {
 				return ApiOperations.deleteItem(polledItem.getName());
 			}
-
 			// docBuilder.setContent(fileContent, ContentFormat.RAW);
 
 		} else {
