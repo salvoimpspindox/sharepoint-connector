@@ -1192,9 +1192,9 @@ class SharePointRepository implements Repository {
 						textContent.getBytes("UTF-8"));
 				docBuilder.setContent(content, ContentFormat.TEXT);
 			} catch (Exception ex) {
-				return ApiOperations.deleteItem(polledItem.getName());
+				docBuilder.setContent(fileContent, ContentFormat.RAW);
+				//return ApiOperations.deleteItem(polledItem.getName());
 			}
-			// docBuilder.setContent(fileContent, ContentFormat.RAW);
 
 		} else {
 			Map<String, PushItem> attachmentsMap = processAttachments(scConnector, listId.value, itemId.value, row,

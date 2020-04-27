@@ -10,6 +10,7 @@ target/
 deploy/
 bin/
 .settings
+.sts4-cache
 
 # IntelliJ files
 workspace/
