@@ -456,14 +456,16 @@ class SharePointRepository implements Repository {
 	}
 
 	private void getModifiedDocIdsSite(SPSite changes, PushItems.Builder pushItems) throws IOException {
-		if (isModified(changes.getChange())) {
-			String encodedDocId = getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl());
-			SharePointObject siteCollection = new SharePointObject.Builder(SharePointObject.SITE_COLLECTION)
-					.setUrl(encodedDocId).setObjectId(changes.getId()).setSiteId(changes.getId())
-					.setWebId(changes.getId()).build();
-			pushItems.addPushItem(encodedDocId,
-					new PushItem().encodePayload(siteCollection.encodePayload()).setType(PUSH_TYPE_MODIFIED));
-		}
+		/*
+		 * if (isModified(changes.getChange())) { String encodedDocId =
+		 * getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl());
+		 * SharePointObject siteCollection = new
+		 * SharePointObject.Builder(SharePointObject.SITE_COLLECTION)
+		 * .setUrl(encodedDocId).setObjectId(changes.getId()).setSiteId(changes.getId())
+		 * .setWebId(changes.getId()).build(); pushItems.addPushItem(encodedDocId, new
+		 * PushItem().encodePayload(siteCollection.encodePayload()).setType(
+		 * PUSH_TYPE_MODIFIED)); }
+		 */
 		List<SPWeb> changedWebs = changes.getSPWeb();
 		if (changedWebs == null) {
 			return;
@@ -474,23 +476,22 @@ class SharePointRepository implements Repository {
 	}
 
 	private void getModifiedDocIdsWeb(SPWeb changes, PushItems.Builder pushItems) throws IOException {
-		if (isModified(changes.getChange())) {
-			InternalUrl internalUrl = new InternalUrl(changes.getInternalUrl());
-			String encodedDocId = getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl());
-			boolean isSiteCollection;
-			try {
-				SiteConnector siteConnector = getConnectorForDocId(encodedDocId);
-				isSiteCollection = siteConnector.isWebSiteCollection();
-			} catch (URISyntaxException e) {
-				throw new IOException(e);
-			}
-			SharePointObject payload = new SharePointObject.Builder(
-					isSiteCollection ? SharePointObject.SITE_COLLECTION : SharePointObject.WEB)
-							.setSiteId(internalUrl.siteId.get()).setWebId(changes.getId()).setUrl(encodedDocId)
-							.setObjectId(changes.getId()).build();
-			pushItems.addPushItem(encodedDocId,
-					new PushItem().encodePayload(payload.encodePayload()).setType(PUSH_TYPE_MODIFIED));
-		}
+		/*
+		 * if (isModified(changes.getChange())) { InternalUrl internalUrl = new
+		 * InternalUrl(changes.getInternalUrl()); String encodedDocId =
+		 * getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl()); boolean
+		 * isSiteCollection; try { SiteConnector siteConnector =
+		 * getConnectorForDocId(encodedDocId); isSiteCollection =
+		 * siteConnector.isWebSiteCollection(); } catch (URISyntaxException e) { throw
+		 * new IOException(e); } SharePointObject payload = new
+		 * SharePointObject.Builder( isSiteCollection ? SharePointObject.SITE_COLLECTION
+		 * : SharePointObject.WEB)
+		 * .setSiteId(internalUrl.siteId.get()).setWebId(changes.getId()).setUrl(
+		 * encodedDocId) .setObjectId(changes.getId()).build();
+		 * pushItems.addPushItem(encodedDocId, new
+		 * PushItem().encodePayload(payload.encodePayload()).setType(PUSH_TYPE_MODIFIED)
+		 * ); }
+		 */
 
 		List<Object> spObjects = changes.getSPFolderOrSPListOrSPFile();
 		if (spObjects == null) {
@@ -504,19 +505,22 @@ class SharePointRepository implements Repository {
 	}
 
 	private void getModifiedDocIdsList(SPList changes, PushItems.Builder pushItems) throws IOException {
-		if (isModified(changes.getChange())) {
-			InternalUrl internalUrl = new InternalUrl(changes.getInternalUrl());
-			if (!internalUrl.siteId.isPresent() || !internalUrl.webId.isPresent()) {
-				log.log(Level.WARNING, "Unable to extract identifiers from internal url {0}", changes.getInternalUrl());
-			} else {
-				String encodedDocId = getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl());
-				SharePointObject payload = new SharePointObject.Builder(SharePointObject.LIST)
-						.setSiteId(internalUrl.siteId.get()).setWebId(internalUrl.webId.get()).setUrl(encodedDocId)
-						.setListId(changes.getId()).setObjectId(changes.getId()).build();
-				pushItems.addPushItem(changes.getId(),
-						new PushItem().encodePayload(payload.encodePayload()).setType(PUSH_TYPE_MODIFIED));
-			}
-		}
+		/*
+		 * if (isModified(changes.getChange())) { InternalUrl internalUrl = new
+		 * InternalUrl(changes.getInternalUrl()); if (!internalUrl.siteId.isPresent() ||
+		 * !internalUrl.webId.isPresent()) { log.log(Level.WARNING,
+		 * "Unable to extract identifiers from internal url {0}",
+		 * changes.getInternalUrl()); } else { String encodedDocId =
+		 * getCanonicalUrl(changes.getServerUrl() + changes.getDisplayUrl());
+		 * SharePointObject payload = new
+		 * SharePointObject.Builder(SharePointObject.LIST)
+		 * .setSiteId(internalUrl.siteId.get()).setWebId(internalUrl.webId.get()).setUrl
+		 * (encodedDocId)
+		 * .setListId(changes.getId()).setObjectId(changes.getId()).build();
+		 * pushItems.addPushItem(changes.getId(), new
+		 * PushItem().encodePayload(payload.encodePayload()).setType(PUSH_TYPE_MODIFIED)
+		 * ); } }
+		 */
 		List<Object> spObjects = changes.getSPViewOrSPListItem();
 		if (spObjects == null) {
 			return;
@@ -722,9 +726,9 @@ class SharePointRepository implements Repository {
 			if (SharePointObject.ATTACHMENT.equals(objectType)) {
 				return getAttachmentDocContent(item, siteConnector, payloadObject);
 			}
-			PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
-					.encodePayload(payloadObject.encodePayload());
-			return new PushItems.Builder().addPushItem(item.getName(), notModified).build();
+			// PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
+			// .encodePayload(payloadObject.encodePayload());
+			return ApiOperations.deleteItem(item.getName());
 		} catch (IOException e) {
 			throw buildRepositoryExceptionFromIOException(String.format("error processing item %s", item.getName()), e);
 		}
@@ -1193,7 +1197,7 @@ class SharePointRepository implements Repository {
 				docBuilder.setContent(content, ContentFormat.TEXT);
 			} catch (Exception ex) {
 				docBuilder.setContent(fileContent, ContentFormat.RAW);
-				//return ApiOperations.deleteItem(polledItem.getName());
+				// return ApiOperations.deleteItem(polledItem.getName());
 			}
 
 		} else {
