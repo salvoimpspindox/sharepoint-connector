@@ -1135,6 +1135,10 @@ class SharePointRepository implements Repository {
 				});
 			}
 		}
+		if (extractedMetadataValues.get("StatoNormativa").iterator().hasNext()) {
+			String status = (String) extractedMetadataValues.removeAll("StatoNormativa").iterator().next();
+			extractedMetadataValues.put("StatoNormativa", status.toUpperCase());
+		}
 		List<String> processesKeys = extractedMetadataValues.keySet().stream()
 				.filter(x -> x.contains("TaxonomyProcesso")).collect(Collectors.toList());
 		processesKeys.forEach(x -> {
