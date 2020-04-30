@@ -683,13 +683,15 @@ class SharePointRepository implements Repository {
 
 			if (SharePointObject.NAMED_RESOURCE.equals(objectType)) {
 				// Do not process named resource here.
-				PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
-						.encodePayload(payloadObject.encodePayload());
-				return new PushItems.Builder().addPushItem(item.getName(), notModified).build();
+				//PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
+				//		.encodePayload(payloadObject.encodePayload());
+				//return new PushItems.Builder().addPushItem(item.getName(), notModified).build();
+				return ApiOperations.deleteItem(item.getName());
 			}
 
 			if (SharePointObject.VIRTUAL_SERVER.equals(objectType)) {
-				return getVirtualServerDocContent(item);
+				//return getVirtualServerDocContent(item);
+				return ApiOperations.deleteItem(item.getName());
 			}
 
 			String itemUrl = SharePointObject.LIST_ITEM.equals(objectType) || SharePointObject.LIST.equals(objectType)
