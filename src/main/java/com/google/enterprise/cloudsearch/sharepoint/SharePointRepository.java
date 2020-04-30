@@ -1137,7 +1137,9 @@ class SharePointRepository implements Repository {
 		}
 		if (extractedMetadataValues.get("StatoNormativa").iterator().hasNext()) {
 			String status = (String) extractedMetadataValues.removeAll("StatoNormativa").iterator().next();
+			log.info("STATO: " + status.toUpperCase());
 			if ("OBSOLETEDOC".equals(status.toUpperCase())) {
+				log.info("DELETING OBSOLETE ITEM WITH NAME: "+ polledItem.getName());
 				return ApiOperations.deleteItem(polledItem.getName());
 			}
 			extractedMetadataValues.put("StatoNormativa", status.toUpperCase());
