@@ -683,14 +683,15 @@ class SharePointRepository implements Repository {
 
 			if (SharePointObject.NAMED_RESOURCE.equals(objectType)) {
 				// Do not process named resource here.
-				//PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
-				//		.encodePayload(payloadObject.encodePayload());
-				//return new PushItems.Builder().addPushItem(item.getName(), notModified).build();
+				// PushItem notModified = new PushItem().setType(PUSH_TYPE_NOT_MODIFIED)
+				// .encodePayload(payloadObject.encodePayload());
+				// return new PushItems.Builder().addPushItem(item.getName(),
+				// notModified).build();
 				return ApiOperations.deleteItem(item.getName());
 			}
 
 			if (SharePointObject.VIRTUAL_SERVER.equals(objectType)) {
-				//return getVirtualServerDocContent(item);
+				// return getVirtualServerDocContent(item);
 				return ApiOperations.deleteItem(item.getName());
 			}
 
@@ -1141,7 +1142,7 @@ class SharePointRepository implements Repository {
 			String status = (String) extractedMetadataValues.removeAll("StatoNormativa").iterator().next();
 			log.info("STATO: " + status.toUpperCase());
 			if ("OBSOLETEDOC".equals(status.toUpperCase())) {
-				log.info("DELETING OBSOLETE ITEM WITH NAME: "+ polledItem.getName());
+				log.info("DELETING OBSOLETE ITEM WITH NAME: " + polledItem.getName());
 				return ApiOperations.deleteItem(polledItem.getName());
 			}
 			extractedMetadataValues.put("StatoNormativa", status.toUpperCase());
