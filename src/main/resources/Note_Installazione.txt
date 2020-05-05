@@ -12,6 +12,10 @@ Copiare il file zip in
 
 /var/share/ubiss-npn-api/
 
+Se presente il file importer.pid (ls importer.pid) eseguire
+
+pkill -F importer.pid
+
 Unzippare il contentuo del file zip
 
 unzip google-cloudsearch-sharepoint-connector-v1-0.0.5.zip
