@@ -6,10 +6,9 @@
         {
           "name": "TitoloNormativa",
           "isReturnable": true,
-          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "titolo"
@@ -22,10 +21,9 @@
         {
           "name": "TipoNormativa",
           "isReturnable": true,
-          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "DEFAULT"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "tipo",
@@ -55,10 +53,9 @@
         {
           "name": "Protocollo",
           "isReturnable": true,
-          "isSuggestable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "protocollo",
@@ -74,7 +71,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "DEFAULT"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "edizione",
@@ -120,11 +117,10 @@
         {
           "name": "Keyword",
           "isReturnable": true,
-          "isSuggestable": true,
           "isRepeatable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "HIGHEST"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "keyword",
@@ -179,7 +175,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "DEFAULT"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "anno",
@@ -195,7 +191,7 @@
           "isReturnable": true,
           "textPropertyOptions": {
             "retrievalImportance": {
-              "importance": "DEFAULT"
+              "importance": "NONE"
             },
             "operatorOptions": {
               "operatorName": "emittente",
@@ -285,6 +281,41 @@
           },
           "displayOptions": {
             "displayLabel": "Processo"
+          }
+        },
+		{
+          "name": "HighestImportanceField",
+          "isReturnable": true,
+          "isSuggestable": true,
+          "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "HIGHEST"
+            },
+            "operatorOptions": {
+              "operatorName": "highestimportance",
+              "exactMatchWithOperator": true
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Highest Importance Field"
+          }
+        },
+		{
+          "name": "DefaultImportanceField",
+          "isReturnable": true,
+          "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "DEFAULT"
+            },
+            "operatorOptions": {
+              "operatorName": "defaultimportance",
+              "exactMatchWithOperator": true
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Default Importance Field"
           }
         }
       ]

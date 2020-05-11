@@ -124,7 +124,7 @@ class SharePointRepository implements Repository {
 	private static final Logger log = Logger.getLogger(SharePointRepository.class.getName());
 
 	private static final String PUSH_TYPE_MODIFIED = "MODIFIED";
-	private static final String PUSH_TYPE_NOT_MODIFIED = "NOT_MODIFIED";
+	// private static final String PUSH_TYPE_NOT_MODIFIED = "NOT_MODIFIED";
 	private static final String PUSH_TYPE_REPOSITORY_ERROR = "REPOSITORY_ERROR";
 
 	/**
@@ -172,7 +172,7 @@ class SharePointRepository implements Repository {
 	private static final String CONTENTTYPEID_DOCUMENT_PREFIX = "0x0101";
 	private static final String OWS_CONTENTTYPE_ATTRIBUTE = "ows_ContentType";
 
-	private static final String OWS_ITEM_TITLE = "ows_Title";
+	//private static final String OWS_ITEM_TITLE = "ows_Title";
 	private static final String OWS_ITEM_OBJECT_ID = "ows_UniqueId";
 
 	private static final Pattern METADATA_ESCAPE_PATTERN = Pattern.compile("_x([0-9a-f]{4})_");
@@ -934,39 +934,36 @@ class SharePointRepository implements Repository {
 				sharepointConfiguration.getSharePointUrl().getUrl());
 	}
 
-	private ApiOperation getVirtualServerDocContent(Item item) throws RepositoryException {
-		try {
-			SiteConnector vsConnector = getSiteConnector(sharepointConfiguration.getVirtualServerUrl(),
-					sharepointConfiguration.getVirtualServerUrl());
-			VirtualServer vs = vsConnector.getSiteDataClient().getContentVirtualServer();
-
-			IndexingItemBuilder itemBuilder = IndexingItemBuilder.fromConfiguration(VIRTUAL_SERVER_ID)
-					.setAcl(vsConnector.getWebApplicationPolicyAcl(vs)).setItemType(ItemType.VIRTUAL_CONTAINER_ITEM)
-					.setPayload(item.decodePayload());
-			RepositoryDoc.Builder docBuilder = new RepositoryDoc.Builder().setItem(itemBuilder.build());
-			for (ContentDatabases.ContentDatabase cdcd : vs.getContentDatabases().getContentDatabase()) {
-				try {
-					ContentDatabase cd = vsConnector.getSiteDataClient().getContentContentDatabase(cdcd.getID(), true);
-					if (cd.getSites() != null) {
-						for (Sites.Site site : cd.getSites().getSite()) {
-							String siteUrl = site.getURL();
-							siteUrl = getCanonicalUrl(siteUrl);
-							SharePointObject siteCollection = new SharePointObject.Builder(
-									SharePointObject.SITE_COLLECTION).setUrl(siteUrl).setObjectId(site.getID())
-											.setSiteId(site.getID()).setWebId(site.getID()).build();
-							docBuilder.addChildId(vsConnector.encodeDocId(siteUrl),
-									new PushItem().encodePayload(siteCollection.encodePayload()));
-						}
-					}
-				} catch (IOException ex) {
-					log.log(Level.WARNING, "Error retrieving sites from content database " + cdcd.getID(), ex);
-				}
-			}
-			return docBuilder.build();
-		} catch (IOException e) {
-			throw buildRepositoryExceptionFromIOException("error processing VirtualServerDoc", e);
-		}
-	}
+	/*
+	 * private ApiOperation getVirtualServerDocContent(Item item) throws
+	 * RepositoryException { try { SiteConnector vsConnector =
+	 * getSiteConnector(sharepointConfiguration.getVirtualServerUrl(),
+	 * sharepointConfiguration.getVirtualServerUrl()); VirtualServer vs =
+	 * vsConnector.getSiteDataClient().getContentVirtualServer();
+	 * 
+	 * IndexingItemBuilder itemBuilder =
+	 * IndexingItemBuilder.fromConfiguration(VIRTUAL_SERVER_ID)
+	 * .setAcl(vsConnector.getWebApplicationPolicyAcl(vs)).setItemType(ItemType.
+	 * VIRTUAL_CONTAINER_ITEM) .setPayload(item.decodePayload());
+	 * RepositoryDoc.Builder docBuilder = new
+	 * RepositoryDoc.Builder().setItem(itemBuilder.build()); for
+	 * (ContentDatabases.ContentDatabase cdcd :
+	 * vs.getContentDatabases().getContentDatabase()) { try { ContentDatabase cd =
+	 * vsConnector.getSiteDataClient().getContentContentDatabase(cdcd.getID(),
+	 * true); if (cd.getSites() != null) { for (Sites.Site site :
+	 * cd.getSites().getSite()) { String siteUrl = site.getURL(); siteUrl =
+	 * getCanonicalUrl(siteUrl); SharePointObject siteCollection = new
+	 * SharePointObject.Builder(
+	 * SharePointObject.SITE_COLLECTION).setUrl(siteUrl).setObjectId(site.getID())
+	 * .setSiteId(site.getID()).setWebId(site.getID()).build();
+	 * docBuilder.addChildId(vsConnector.encodeDocId(siteUrl), new
+	 * PushItem().encodePayload(siteCollection.encodePayload())); } } } catch
+	 * (IOException ex) { log.log(Level.WARNING,
+	 * "Error retrieving sites from content database " + cdcd.getID(), ex); } }
+	 * return docBuilder.build(); } catch (IOException e) { throw
+	 * buildRepositoryExceptionFromIOException("error processing VirtualServerDoc",
+	 * e); } }
+	 */
 
 	private static RepositoryException buildRepositoryExceptionFromIOException(String message, IOException e) {
 		String errorMessage = String.format("[%s]-%s", message, e.getMessage());
@@ -1087,12 +1084,13 @@ class SharePointRepository implements Repository {
 				log.log(Level.INFO, "Could not parse ows_Created: {0}", createdString);
 			}
 		}
-		itemBuilder.setTitle(withValue(row.getAttribute(OWS_ITEM_TITLE)));
 
 		String type = getValueFromIdPrefixedField(row, OWS_FSOBJTYPE_ATTRIBUTE);
 		boolean isFolder = "1".equals(type);
 		Element schemaElement = getFirstChildWithName(xml, SCHEMA_ELEMENT);
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
+		boolean main = false;
+
 		if (extractedMetadataValues.get("ContestoVisibilita").iterator().hasNext()) {
 			String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
 			if (contestoVisibilita != null) {
@@ -1111,7 +1109,8 @@ class SharePointRepository implements Repository {
 		}
 		if (extractedMetadataValues.get("FlagPrincipale").iterator().hasNext()) {
 			String principale = (String) extractedMetadataValues.get("FlagPrincipale").iterator().next();
-			extractedMetadataValues.put("Principale", principale.equals("1"));
+			main = principale.equals("1");
+			extractedMetadataValues.put("Principale", main);
 		}
 		if (extractedMetadataValues.get("FlagRetiEsterne").iterator().hasNext()) {
 			String retiEsterne = (String) extractedMetadataValues.get("FlagRetiEsterne").iterator().next();
@@ -1140,7 +1139,6 @@ class SharePointRepository implements Repository {
 		}
 		if (extractedMetadataValues.get("StatoNormativa").iterator().hasNext()) {
 			String status = (String) extractedMetadataValues.removeAll("StatoNormativa").iterator().next();
-			log.info("STATO: " + status.toUpperCase());
 			if ("OBSOLETEDOC".equals(status.toUpperCase())) {
 				log.info("DELETING OBSOLETE ITEM WITH NAME: " + polledItem.getName());
 				return ApiOperations.deleteItem(polledItem.getName());
@@ -1163,6 +1161,24 @@ class SharePointRepository implements Repository {
 		if (!Strings.isNullOrEmpty(objectType) && StructuredData.hasObjectDefinition(objectType)) {
 			itemBuilder.setObjectType(withValue(objectType));
 		}
+		if (!main) {
+			log.info("Deleting title");
+			itemBuilder.setTitle(withValue(""));
+		} else {
+			String highestImportanceFieldIdentifier = "HighestImportanceField";
+			String defaultImportanceFieldIdentifier = "DefaultImportanceField";
+			log.info("Adding default and highest importance fields");
+			List<String> highestKeys = Arrays.asList("TitoloNormativa", "Protocollo", "Keyword", "NumeroEdizione",
+					"Anno");
+			List<String> defaultKeys = Arrays.asList("TitoloNormativa", "Protocollo", "Keyword", "NumeroEdizione",
+					"Anno");
+			highestKeys.forEach(x -> extractedMetadataValues.get(x)
+					.forEach(v -> extractedMetadataValues.put(highestImportanceFieldIdentifier, v)));
+			defaultKeys.forEach(x -> extractedMetadataValues.get(x)
+					.forEach(v -> extractedMetadataValues.put(defaultImportanceFieldIdentifier, v)));
+			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
+		}
+
 		itemBuilder.setValues(extractedMetadataValues);
 		if (isFolder) {
 			String serverUrl = row.getAttribute(OWS_SERVERURL_ATTRIBUTE);
@@ -1193,7 +1209,6 @@ class SharePointRepository implements Repository {
 		if (isDocument) {
 			itemBuilder.setItemType(ItemType.CONTENT_ITEM);
 			// SALVO
-			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
 			AbstractInputStreamContent fileContent = getFileContent(itemObject.getUrl(), itemBuilder, true);
 			if (fileContent == null)
 				return ApiOperations.deleteItem(polledItem.getName());
@@ -1230,8 +1245,8 @@ class SharePointRepository implements Repository {
 			log.warning("\n\nContent different from NPNDocumento not wanted\n\n");
 			return ApiOperations.deleteItem(polledItem.getName());
 		}
-		log.info("\n\nDati item: "
-				+ item.getMetadata().getTitle() + extractedMetadataValues.entries().stream()
+		log.info("\n\nDati item. Title: "
+				+ item.getMetadata().getTitle() + ", Metadata: " + extractedMetadataValues.entries().stream()
 						.map(x -> x.getKey() + ":" + x.getValue().toString()).collect(Collectors.joining(","))
 				+ "\n\n");
 		return docBuilder.setItem(item).build();
