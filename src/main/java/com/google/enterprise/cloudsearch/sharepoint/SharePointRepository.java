@@ -172,7 +172,7 @@ class SharePointRepository implements Repository {
 	private static final String CONTENTTYPEID_DOCUMENT_PREFIX = "0x0101";
 	private static final String OWS_CONTENTTYPE_ATTRIBUTE = "ows_ContentType";
 
-	//private static final String OWS_ITEM_TITLE = "ows_Title";
+	// private static final String OWS_ITEM_TITLE = "ows_Title";
 	private static final String OWS_ITEM_OBJECT_ID = "ows_UniqueId";
 
 	private static final Pattern METADATA_ESCAPE_PATTERN = Pattern.compile("_x([0-9a-f]{4})_");
@@ -1249,6 +1249,7 @@ class SharePointRepository implements Repository {
 				+ item.getMetadata().getTitle() + ", Metadata: " + extractedMetadataValues.entries().stream()
 						.map(x -> x.getKey() + ":" + x.getValue().toString()).collect(Collectors.joining(","))
 				+ "\n\n");
+		item.getMetadata().setContentLanguage("it-IT");
 		return docBuilder.setItem(item).build();
 	}
 
