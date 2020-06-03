@@ -2,6 +2,12 @@
   "objectDefinitions": [
     {
       "name": "document",
+      "options": {
+        "freshnessOptions": {
+          "freshnessProperty": "DataEmanazione",
+          "freshnessDuration": "15552000s"
+        }
+      },
       "propertyDefinitions": [
         {
           "name": "TitoloNormativa",
@@ -283,7 +289,7 @@
             "displayLabel": "Processo"
           }
         },
-		{
+        {
           "name": "HighestImportanceField",
           "isReturnable": true,
           "isSuggestable": true,
@@ -301,7 +307,7 @@
             "displayLabel": "Highest Importance Field"
           }
         },
-		{
+        {
           "name": "DefaultImportanceField",
           "isReturnable": true,
           "isRepeatable": true,
@@ -316,6 +322,66 @@
           },
           "displayOptions": {
             "displayLabel": "Default Importance Field"
+          }
+        },
+		{
+          "name": "LimitedSecurityRole",
+          "isReturnable": true,
+          "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "NONE"
+            },
+            "operatorOptions": {
+              "operatorName": "limitedsecurityrole",
+              "exactMatchWithOperator": true
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Limited Security Role"
+          }
+        },
+		{
+          "name": "ExtendedSecurityRole",
+          "isReturnable": true,
+          "isRepeatable": true,
+          "textPropertyOptions": {
+            "retrievalImportance": {
+              "importance": "NONE"
+            },
+            "operatorOptions": {
+              "operatorName": "extendedsecurityrole",
+              "exactMatchWithOperator": true
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Extended Security Role"
+          }
+        },
+		{
+          "name": "HasLimitedSecurityRole",
+          "isReturnable": false,
+          "isRepeatable": false,
+          "booleanPropertyOptions": {
+            "operatorOptions": {
+              "operatorName": "haslimitedsecurityrole"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Has Limited Security Role"
+          }
+        },
+		{
+          "name": "HasExtendedSecurityRole",
+          "isReturnable": false,
+          "isRepeatable": false,
+          "booleanPropertyOptions": {
+            "operatorOptions": {
+              "operatorName": "hasextendedsecurityrole"
+            }
+          },
+          "displayOptions": {
+            "displayLabel": "Has Extended Security Role"
           }
         }
       ]

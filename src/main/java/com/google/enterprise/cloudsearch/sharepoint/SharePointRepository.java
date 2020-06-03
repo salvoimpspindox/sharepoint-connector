@@ -1154,6 +1154,31 @@ class SharePointRepository implements Repository {
 			}
 		});
 
+		if (extractedMetadataValues.get("ExtendedRoles").iterator().hasNext()) {
+			String keywords = (String) extractedMetadataValues.get("ExtendedRoles").iterator().next();
+			if (keywords != null) {
+				String[] keys = keywords.split(",");
+				Arrays.asList(keys).forEach(x -> {
+					extractedMetadataValues.put("ExtendedSecurityRole", x);
+				});
+				if (!keywords.isEmpty() && keys.length > 0) {
+					extractedMetadataValues.put("HasExtendedSecurityRole", true);
+				}
+			}
+		}
+		if (extractedMetadataValues.get("LimitedRoles").iterator().hasNext()) {
+			String keywords = (String) extractedMetadataValues.get("LimitedRoles").iterator().next();
+			if (keywords != null) {
+				String[] keys = keywords.split(",");
+				Arrays.asList(keys).forEach(x -> {
+					extractedMetadataValues.put("LimitedSecurityRole", x);
+				});
+				if (!keywords.isEmpty() && keys.length > 0) {
+					extractedMetadataValues.put("HasLimitedSecurityRole", true);
+				}
+			}
+		}
+
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
 		String objectType = contentType == null ? "" : getNormalizedObjectType(contentType);
 		if (!Strings.isNullOrEmpty(objectType) && StructuredData.hasObjectDefinition(objectType)) {
