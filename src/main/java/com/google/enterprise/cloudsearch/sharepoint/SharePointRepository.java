@@ -1191,10 +1191,8 @@ class SharePointRepository implements Repository {
 			String highestImportanceFieldIdentifier = "HighestImportanceField";
 			String defaultImportanceFieldIdentifier = "DefaultImportanceField";
 			log.info("Adding default and highest importance fields");
-			List<String> highestKeys = Arrays.asList("TitoloNormativa", "Protocollo", "Keyword", "NumeroEdizione",
-					"Anno");
-			List<String> defaultKeys = Arrays.asList("TitoloNormativa", "Protocollo", "Keyword", "NumeroEdizione",
-					"Anno");
+			List<String> highestKeys = Arrays.asList("TitoloNormativa", "Keyword");
+			List<String> defaultKeys = Arrays.asList("Protocollo", "NumeroEdizione", "Anno");
 			highestKeys.forEach(x -> extractedMetadataValues.get(x)
 					.forEach(v -> extractedMetadataValues.put(highestImportanceFieldIdentifier, v)));
 			defaultKeys.forEach(x -> extractedMetadataValues.get(x)
