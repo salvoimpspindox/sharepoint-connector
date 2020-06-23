@@ -1163,9 +1163,16 @@ class SharePointRepository implements Repository {
 				});
 				if (!keywords.isEmpty() && keys.length > 0) {
 					extractedMetadataValues.put("HasExtendedSecurityRole", true);
+				} else {
+					extractedMetadataValues.put("HasExtendedSecurityRole", false);
 				}
+			} else {
+				extractedMetadataValues.put("HasExtendedSecurityRole", false);
 			}
+		} else {
+			extractedMetadataValues.put("HasExtendedSecurityRole", false);
 		}
+
 		if (extractedMetadataValues.get("LimitedRoles").iterator().hasNext()) {
 			String keywords = (String) extractedMetadataValues.get("LimitedRoles").iterator().next();
 			if (keywords != null) {
@@ -1175,8 +1182,14 @@ class SharePointRepository implements Repository {
 				});
 				if (!keywords.isEmpty() && keys.length > 0) {
 					extractedMetadataValues.put("HasLimitedSecurityRole", true);
+				} else {
+					extractedMetadataValues.put("HasLimitedSecurityRole", false);
 				}
+			} else {
+				extractedMetadataValues.put("HasLimitedSecurityRole", false);
 			}
+		} else {
+			extractedMetadataValues.put("HasLimitedSecurityRole", false);
 		}
 
 		String contentType = row.getAttribute(OWS_CONTENTTYPE_ATTRIBUTE);
@@ -1197,7 +1210,13 @@ class SharePointRepository implements Repository {
 					.forEach(v -> extractedMetadataValues.put(highestImportanceFieldIdentifier, v)));
 			defaultKeys.forEach(x -> extractedMetadataValues.get(x)
 					.forEach(v -> extractedMetadataValues.put(defaultImportanceFieldIdentifier, v)));
-			itemBuilder.setTitle(withValue(extractedMetadataValues.get("TitoloNormativa").toString()));
+			try {
+				itemBuilder.setTitle(
+						withValue(extractedMetadataValues.get("TitoloNormativa").iterator().next().toString()));
+			} catch (Exception ex) {
+				itemBuilder.setTitle(
+						withValue(extractedMetadataValues.get("TitoloNormativa").iterator().next().toString()));
+			}
 		}
 
 		itemBuilder.setValues(extractedMetadataValues);
