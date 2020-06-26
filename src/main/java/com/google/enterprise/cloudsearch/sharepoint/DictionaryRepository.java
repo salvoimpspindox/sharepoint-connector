@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -93,7 +94,8 @@ public class DictionaryRepository implements Repository {
 		// Using the SDK item builder class to create the item
 		Item item = IndexingItemBuilder.fromConfiguration(itemName)
 				.setItemType(IndexingItemBuilder.ItemType.CONTENT_ITEM).setObjectType(withValue("_dictionaryEntry"))
-				.setValues(structuredData).setAcl(DOMAIN_PUBLIC_ACL).build();
+				.setVersion(String.valueOf(new Date().getTime()).getBytes()).setValues(structuredData)
+				.setAcl(DOMAIN_PUBLIC_ACL).build();
 
 		// Create the fully formed document
 		return new RepositoryDoc.Builder().setItem(item).build();
