@@ -12,10 +12,6 @@ Connettersi alla macchina con utente spindox. Copiare il file zip in
 
 /var/share/ubiss-connector/
 
-Eseguire "ps aux | grep google" copiare il pid ed eseguire
-
-kill -9 {pid}
-
 Unzippare il contentuo del file zip
 
 unzip google-cloudsearch-sharepoint-connector-v1-0.0.5.zip
@@ -28,17 +24,19 @@ Creare una cartella logs
 
 mkdir logs
 
-Dare i permessi ad importer.sh
+Dare i permessi ad importer-sinonimi.sh
 
-chmod +x importer.sh
+chmod +x importer-sinonimi.sh
+
+Copiare file contenente i sinonimi nella cartella e rinominarlo in sinonimi.csv
 
 Rinominare il file di configurazione relativo all'ambiente in connector-config.properties
 
-mv connector-config-{ambiente}.properties connector-config.properties; es: mv connector-config-collaudo.properties connector-config.properties
+mv connector-config-{ambiente}-sinonimi.properties connector-config.properties; es: mv connector-config-collaudo-sinonimi.properties connector-config.properties
 
-Eseguire importer.sh
+Eseguire importer-sinonimi.sh
 
-./importer.sh
+./importer-sinonimi.sh
 
 Integrazione    npnl101t.hbl.local
 Collaudo        npnl101c.hbl.local
