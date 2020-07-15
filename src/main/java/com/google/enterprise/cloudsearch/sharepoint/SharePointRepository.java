@@ -1214,8 +1214,6 @@ class SharePointRepository implements Repository {
 				itemBuilder.setTitle(
 						withValue(extractedMetadataValues.get("TitoloNormativa").iterator().next().toString()));
 			} catch (Exception ex) {
-				itemBuilder.setTitle(
-						withValue(extractedMetadataValues.get("TitoloNormativa").iterator().next().toString()));
 			}
 		}
 
