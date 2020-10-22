@@ -1089,6 +1089,15 @@ class SharePointRepository implements Repository {
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
 		boolean main = false;
 
+		if (extractedMetadataValues.get("GoodBank").iterator().hasNext()) {
+			String goodBankString = (String) extractedMetadataValues.get("GoodBank").iterator().next();
+			boolean goodBank = goodBankString.equals("1");
+			if (goodBank) {
+				log.info("DELETING GoodBank item: " + polledItem.getName());
+				return ApiOperations.deleteItem(polledItem.getName());
+			}
+		}
+
 		if (extractedMetadataValues.get("ContestoVisibilita").iterator().hasNext()) {
 			String contestoVisibilita = (String) extractedMetadataValues.get("ContestoVisibilita").iterator().next();
 			if (contestoVisibilita != null) {
