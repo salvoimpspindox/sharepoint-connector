@@ -581,7 +581,9 @@ class SharePointRepository implements Repository {
 	}
 
 	private static boolean isModified(String change) {
-		return !"Unchanged".equals(change) && !"Delete".equals(change) && !"UpdateShallow".equals(change);
+		return !"Unchanged".equals(change) && !"Delete".equals(change) 
+				//&& !"UpdateShallow".equals(change)
+				;
 	}
 
 	private CheckpointCloseableIterable<ApiOperation> getChangesVirtualServerMode(
@@ -1089,8 +1091,8 @@ class SharePointRepository implements Repository {
 		Multimap<String, Object> extractedMetadataValues = extractMetadataValues(schemaElement, row);
 		boolean main = false;
 
-		if (extractedMetadataValues.get("GoodBank").iterator().hasNext()) {
-			String goodBankString = (String) extractedMetadataValues.get("GoodBank").iterator().next();
+		if (extractedMetadataValues.get("Goodbank").iterator().hasNext()) {
+			String goodBankString = (String) extractedMetadataValues.get("Goodbank").iterator().next();
 			boolean goodBank = goodBankString.equals("1");
 			if (goodBank) {
 				log.info("DELETING GoodBank item: " + polledItem.getName());
